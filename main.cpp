@@ -1,43 +1,7 @@
 #include "mbed.h"
  
-// AMC7891 Register Map
-#define AMC_TEMP_DATA 0x00
-#define AMC_TEMP_CONFIG 0x0A
-#define AMC_TEMP_RATE 0x0B
-#define AMC_ADC0_DATA 0x23
-#define AMC_ADC1_DATA 0x24
-#define AMC_ADC2_DATA 0x25
-#define AMC_ADC3_DATA 0x26
-#define AMC_ADC4_DATA 0x27
-#define AMC_ADC5_DATA 0x28
-#define AMC_ADC6_DATA 0x29
-#define AMC_ADC7_DATA 0x2A
-#define AMC_DAC0_DATA 0x2B
-#define AMC_DAC1_DATA 0x2C
-#define AMC_DAC2_DATA 0x2D
-#define AMC_DAC3_DATA 0x2E
-#define AMC_DAC0_CLEAR 0x2F
-#define AMC_DAC1_CLEAR 0x30
-#define AMC_DAC2_CLEAR 0x31
-#define AMC_DAC3_CLEAR 0x32
-#define AMC_GPIO_CONFIG 0x33
-#define AMC_GPIO_OUT 0x34
-#define AMC_GPIO_IN 0x35
-#define AMC_AMC_CONFIG 0x36
-#define AMC_ADC_ENABLE 0x37
-#define AMC_ADC_GAIN 0x38
-#define AMC_DAC_CLEAR 0x39
-#define AMC_DAC_SYNC 0x3A
-#define AMC_AMC_POWER 0x3B
-#define AMC_AMC_RESET 0x3E
-#define AMC_AMC_ID 0x40
-
-enum TELEM
-{
-	AFE_CH_B,
-	AFE_CH_A,
-	AFE_MAIN
-};
+#include "amc7891.h"
+#include "graviton.h"
 
 
 Serial pc(PA_2, NC);
@@ -47,10 +11,10 @@ DigitalOut buzzer(PA_0);
 DigitalOut osc_en(PA_11);
 SPI spi_bus(PB_5, PB_4, PB_3);
 
+AMC7891 afe_a(&spi_bus, PA_15);
+AMC7891 afe_b(&spi_bus, PA_12);
+AMC7891 afe_0(&spi_bus, PB_0);
 
-DigitalOut afe_ch_b_cs(PA_12);
-DigitalOut afe_ch_a_cs(PA_15);
-DigitalOut afe_main_cs(PB_0);
 DigitalOut dac_cs(PB_6);
 DigitalOut adc_cs(PB_1);
 DigitalOut clk_cs(PA_4);
@@ -65,130 +29,85 @@ AnalogIn adc_batt(ADC_VBAT);
 AnalogIn adc_vref1(ADC_VREF1);
 AnalogIn adc_vref2(ADC_VREF2);
 
-void delay()
-{
-	unsigned long a = 1000;
-
-	while(a--) { }
-}
-
-void ToggleAFE(TELEM telem, bool state)
-{
-	switch(telem)
-	{
-	case AFE_CH_B:
-		afe_ch_b_cs = state;
-		break;
-	case AFE_CH_A:
-		afe_ch_a_cs = state;
-		break;
-	case AFE_MAIN:
-		afe_main_cs = state;
-		break;
-	default:
-		break;
-	}
-}
 
 
-void WriteAFE(TELEM telem, unsigned char addr, uint16_t val)
-{
-	uint8_t out[3];
-
-	out[0] = addr;
-	out[1] = val >> 8;
-	out[2] = val & 0xFF;
-
-	delay();
-
-	ToggleAFE(telem, 0);
-	afe_main_cs = 0;
-
-	spi_bus.write((const char*)out, 3, 0, 0);
-
-	ToggleAFE(telem, 1);
-}
 
 
-uint16_t ReadAFE(TELEM telem, unsigned char addr)
-{
-	uint8_t in[3] = {0};
-	uint8_t out[3];
 
-	in[0] = 0x80 | addr;
-
-	delay();
-
-	ToggleAFE(telem, 0);
-
-	spi_bus.write((const char*)in, 3, 0, 0);
-
-	ToggleAFE(telem, 1);
-
-	delay();
-
-	in[0] = 0x80 | AMC_AMC_ID;
-
-	ToggleAFE(telem, 0);
-
-	spi_bus.write((const char*)in, 3, (char*)out, 3);
-
-	ToggleAFE(telem, 1);
-
-	return (out[1] << 8) | (out[2]);
-}
-
-void InitAFE(TELEM telem)
-{
-	// reset AFE controller
-	WriteAFE(telem, AMC_AMC_RESET, 0x6600);
-
-	// set all GPIO to output
-	WriteAFE(telem, AMC_GPIO_CONFIG, 0x0000);
-
-	// enable temperature sensor
-	WriteAFE(telem, AMC_TEMP_CONFIG, 0x0008);
-
-	// set temperature conversion time (15ms)
-	WriteAFE(telem, AMC_TEMP_RATE, 0x0007);
-
-	// Enable ADC and internal reference
-	WriteAFE(telem, AMC_AMC_POWER, 0x6000);
-
-	 // set GPIOs
-	WriteAFE(telem, AMC_GPIO_OUT, 0x0000);
-}
 
 
 void init()
 {
+	uint8_t ret;
+
+	buzzer = 0;       // buzzer doesn't actually work
+	osc_en = 0;       // not yet ready to setup oscillator
+
+	dac_cs = 1;       // DAC Chip Select
+	adc_cs = 1;       // ADC Chip Select
+	clk_cs = 1;       // Clock Distribution IC Chip Select
+	synth_cs = 1;     // Clock Synthesizer IC Chip Select
+
+	dac_rst = 0;      // Active Low DAC Reset (hold in reset)
+	adc_rst = 0;      // Active Low ADC Reset (hold in reset)
+	synth_rst = 0;    // Active Low Synthesizer Reset (hold in reset)
+
+	// Set serial port baud
 	pc.baud(115200);
 
-	buzzer = 0; // buzzer doesn't actually work
-	osc_en = 0; // not yet ready to setup oscillator
+	pc.printf("LOG: attempting to change to external oscillator\r\n");
 
-	afe_ch_b_cs = 1;
-	afe_ch_a_cs = 1;
-	afe_main_cs = 1;
-	dac_cs = 1;
-	adc_cs = 1;
-	clk_cs = 1;
-	synth_cs = 1;
+	osc_en = 1;       // Turn on External Oscillator
 
-	dac_rst = 0;
-	adc_rst = 0;
-	synth_rst = 0;
+	wait_ms(10);      // Wait for it to stabilize
 
+	// Change internal clock source to external oscillator
+	ret = switch_to_ext_osc();
+
+	// Set serial port baud again (it got messed up when we changed the clock)
+	pc.baud(115200);
+
+	if( 1 == ret )
+		pc.printf("LOG: external oscillator configured successfully\r\n");
+	else
+	{
+		pc.printf("ERROR: EXTERNAL OSCILLATOR FAILED TO CONFIGURE. HALTING\r\n");
+		while(1) { }
+	}
+
+	// Set SPI bus format
 	spi_bus.format(8,1);
-	spi_bus.frequency(1000000);
+	spi_bus.frequency(18000000);
 
-	delay();
+	afe_a.init();
+	afe_b.init();
+	afe_0.init();
 
-	InitAFE(AFE_CH_B);
-	InitAFE(AFE_CH_A);
-	InitAFE(AFE_MAIN);
+	// Configure main AFE
+	afe_0.config_gpio(GRAV_MAIN_ENABLES, GRAV_MAIN_DEFAULTS);
 
-	pc.printf("Hello World\n\r");
+	// Configure RF AFE
+	afe_a.config_gpio(GRAV_CH_ENABLES, GRAV_CH_DEFAULTS);
+	afe_b.config_gpio(GRAV_CH_ENABLES, GRAV_CH_DEFAULTS);
+
+	// Wait for Copper Suicide to come up
+	wait_ms(500);
+
+	if( (get_v2v5(&afe_0) < 100) &&
+		(get_v1v8(&afe_0) < 100) ) {
+		afe_0.set_gpio(GRAV_MAIN_POWER_ON_TX_OFF);
+	}
+	else {
+		pc.printf("ERROR: BUS IS POWERED. HALTING\r\n");
+		while(1) { }
+	}
+
+	// Wait for power supplies to stabilize
+	wait_ms(100);
+	make_afe_dac_safe(&afe_a);
+	make_afe_dac_safe(&afe_b);
+
+	pc.printf("Ready!\n\r");
 }
 
 
@@ -198,18 +117,31 @@ int main()
 {
 	init();
 
-	uint16_t temp_ch_b, temp_ch_a, temp_main;
+	uint16_t temp_ch_b, temp_ch_a, temp_main, val;
 
-
-
+	pc.printf("\033[2J");
 	while(1)
 	{
 
-		temp_ch_b = ReadAFE(AFE_CH_B, AMC_TEMP_DATA) / 8;
-		temp_ch_a = ReadAFE(AFE_CH_A, AMC_TEMP_DATA) / 8;
-		temp_main = ReadAFE(AFE_MAIN, AMC_TEMP_DATA) / 8;
+		temp_ch_b = afe_b.read_reg(AMC_TEMP_DATA) / 8;
+		temp_ch_a = afe_a.read_reg(AMC_TEMP_DATA) / 8;
+		temp_main = afe_0.read_reg(AMC_TEMP_DATA) / 8;
 
-	pc.printf("AFE Temperature   A: %i   B: %i   MAIN: %i\n\r", temp_ch_a, temp_ch_b, temp_main);
+
+		pc.printf("\033[0;0H");
+		pc.printf("V2V5 = %u\r\n", get_v2v5(&afe_0));
+		pc.printf("V1V8 = %u\r\n", get_v1v8(&afe_0));
+		pc.printf("V3V8 = %u\r\n", get_v3v8(&afe_0));
+		pc.printf("V5V5N_V = %u\r\n", get_v5v5n(&afe_0));
+		pc.printf("V5V5_V = %u\r\n", get_v5v5(&afe_0));
+		pc.printf("V29_V = %u\r\n", get_v29(&afe_0));
+		pc.printf("ADC_TEMP = %i\r\n", get_adc_temp(&afe_0));
+
+		pc.printf("AFE Temperature   A: %i   B: %i   MAIN: %i\n\r", temp_ch_a, temp_ch_b, temp_main);
+
+		wait(1);
 	}
 
 }
+
+

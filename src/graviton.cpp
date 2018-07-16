@@ -1,0 +1,188 @@
+/*
+ * graviton.cpp
+ *
+ *  Created on: Jul 16, 2018
+ *      Author: karthik
+ */
+
+
+#include "graviton.h"
+
+void make_afe_dac_safe(AMC7891 *afe)
+{
+	afe->write_dac(AMC_DAC0, GRAV_AFE_DAC0_SAFE);
+	afe->write_dac(AMC_DAC1, GRAV_AFE_DAC1_SAFE);
+	afe->write_dac(AMC_DAC2, GRAV_AFE_DAC2_SAFE);
+	afe->write_dac(AMC_DAC3, GRAV_AFE_DAC3_SAFE);
+	afe->enable_dacs();
+}
+
+
+uint32_t get_v2v5(AMC7891 *afe)
+{
+	uint32_t in;
+	in = afe->read_adc(GRAV_ADC_V2V5);
+	return (in * 5 * 1000) / 1024;
+}
+
+uint32_t get_v1v8(AMC7891 *afe)
+{
+	uint32_t in;
+	in = afe->read_adc(GRAV_ADC_V1V8);
+	return (in * 5 * 1000) / 1024;
+}
+
+uint32_t get_v3v8(AMC7891 *afe)
+{
+	uint32_t in;
+	in = afe->read_adc(GRAV_ADC_V3V8);
+	return (in * 5 * 1000) / 1024;
+}
+
+uint32_t get_v5v5(AMC7891 *afe)
+{
+	uint32_t in;
+	in = afe->read_adc(GRAV_ADC_V5V5_V);
+	return (in * 5 * 1000*88) / (1024*20);
+}
+
+uint32_t get_v5v5n(AMC7891 *afe)
+{
+	uint32_t in, vhi;
+	in = (afe->read_adc(GRAV_ADC_V5V5N_V) * 5 * 1000) / 1024;
+
+	return (6800*get_v5v5(afe) - in*6800 - in*2000) / 6800;
+}
+
+uint32_t get_v29(AMC7891 *afe)
+{
+	uint32_t in;
+	in = afe->read_adc(GRAV_ADC_V29_V);
+	return (in * 333125) / 2944;
+}
+
+int32_t get_adc_temp(AMC7891 *afe)
+{
+	uint32_t in;
+	in = (afe->read_adc(GRAV_ADC_ADC_TEMP)* 5 * 1000) / 1024;
+
+	return -(100*in - 186630)/1169;
+}
+
+uint8_t switch_to_ext_osc()
+{
+    RCC_ClkInitTypeDef RCC_ClkInitStruct;
+    RCC_OscInitTypeDef RCC_OscInitStruct;
+
+
+    /* Reset the RCC clock configuration to the default reset state ------------*/
+    /* Set HSION bit */
+    RCC->CR |= 0x00000001U;
+
+    /* Reset CFGR register */
+    RCC->CFGR &= 0xF87FC00CU;
+
+    /* Reset HSEON, CSSON and PLLON bits */
+    RCC->CR &= 0xFEF6FFFFU;
+
+    /* Reset HSEBYP bit */
+    RCC->CR &= 0xFFFBFFFFU;
+
+    /* Reset PLLSRC, PLLXTPRE, PLLMUL and USBPRE bits */
+    RCC->CFGR &= 0xFF80FFFFU;
+
+    /* Reset PREDIV1[3:0] bits */
+    RCC->CFGR2 &= 0xFFFFFFF0U;
+
+    /* Reset USARTSW[1:0], I2CSW and TIMs bits */
+    RCC->CFGR3 &= 0xFF00FCCCU;
+
+    /* Disable all interrupts */
+    RCC->CIR = 0x00000000U;
+
+    /* Enable HSE oscillator and activate PLL with HSE as source */
+    RCC_OscInitStruct.OscillatorType      = RCC_OSCILLATORTYPE_HSE;
+
+    RCC_OscInitStruct.HSEState          = RCC_HSE_BYPASS; /* External 8 MHz clock on OSC_IN */
+
+    RCC_OscInitStruct.HSEPredivValue      = RCC_HSE_PREDIV_DIV1;
+    RCC_OscInitStruct.PLL.PLLState        = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource       = RCC_PLLSOURCE_HSE;
+    RCC_OscInitStruct.PLL.PLLMUL          = RCC_PLL_MUL9; // 72 MHz (8 MHz * 9)
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+        return 0; // FAIL
+    }
+
+    /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 clocks dividers */
+    RCC_ClkInitStruct.ClockType      = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+    RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK; // 72 MHz
+    RCC_ClkInitStruct.AHBCLKDivider  = RCC_SYSCLK_DIV1;         // 72 MHz
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;           // 36 MHz
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;           // 72 MHz
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
+        return 0; // FAIL
+    }
+
+    return 1; // OK
+}
+
+
+uint8_t switch_to_internal_clock()
+{
+    RCC_ClkInitTypeDef RCC_ClkInitStruct;
+    RCC_OscInitTypeDef RCC_OscInitStruct;
+
+
+    /* Reset the RCC clock configuration to the default reset state ------------*/
+    /* Set HSION bit */
+    RCC->CR |= 0x00000001U;
+
+    /* Reset CFGR register */
+    RCC->CFGR &= 0xF87FC00CU;
+
+    /* Reset HSEON, CSSON and PLLON bits */
+    RCC->CR &= 0xFEF6FFFFU;
+
+    /* Reset HSEBYP bit */
+    RCC->CR &= 0xFFFBFFFFU;
+
+    /* Reset PLLSRC, PLLXTPRE, PLLMUL and USBPRE bits */
+    RCC->CFGR &= 0xFF80FFFFU;
+
+    /* Reset PREDIV1[3:0] bits */
+    RCC->CFGR2 &= 0xFFFFFFF0U;
+
+    /* Reset USARTSW[1:0], I2CSW and TIMs bits */
+    RCC->CFGR3 &= 0xFF00FCCCU;
+
+    /* Disable all interrupts */
+    RCC->CIR = 0x00000000U;
+
+    /* Enable HSI oscillator and activate PLL with HSI as source */
+    RCC_OscInitStruct.OscillatorType      = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_HSE;
+    RCC_OscInitStruct.HSIState            = RCC_HSI_ON;
+    RCC_OscInitStruct.HSEState            = RCC_HSE_OFF;
+    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+    RCC_OscInitStruct.PLL.PLLState        = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource       = RCC_PLLSOURCE_HSI;
+    RCC_OscInitStruct.PLL.PLLMUL          = RCC_PLL_MUL16; // 64 MHz (8 MHz/2 * 16)
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+        return 0; // FAIL
+    }
+
+    /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 clocks dividers */
+    RCC_ClkInitStruct.ClockType      = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+    RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK; // 64 MHz
+    RCC_ClkInitStruct.AHBCLKDivider  = RCC_SYSCLK_DIV1;         // 64 MHz
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;           // 32 MHz
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;           // 64 MHz
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
+        return 0; // FAIL
+    }
+
+    /* Output clock on MCO1 pin(PA8) for debugging purpose */
+    //HAL_RCC_MCOConfig(RCC_MCO, RCC_MCOSOURCE_HSI, RCC_MCO_DIV1); // 8 MHz
+
+    return 1; // OK
+}
+
