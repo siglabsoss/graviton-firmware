@@ -76,14 +76,17 @@
 int32_t get_adc_temp(AMC7891 *afe);
 
 uint32_t get_mv(AMC7891 *afe, ADC_CHANNEL channel);
-int32_t conv_mv_v5v5n(uint32_t in_mv, uint32_t v5);
+int32_t conv_mv_v5v5n(uint32_t in_mv);
 uint32_t conv_mv_v5v5(uint32_t in_mv);
 uint32_t conv_mv_v29(uint32_t in_mv);
+uint32_t conv_mv_i_pa(uint32_t in_mv);
 
 uint8_t switch_to_ext_osc();
 uint8_t switch_to_internal_clock();
 
 void make_afe_dac_safe(AMC7891 *afe);
+
+uint8_t get_i_pa(AMC7891 *afe);
 
 /*
  * SHORTCUTS
@@ -96,10 +99,28 @@ void make_afe_dac_safe(AMC7891 *afe);
 #define V1V8          get_mv(&afe_0, GRAV_ADC_V1V8)
 #define V3V8          get_mv(&afe_0, GRAV_ADC_V3V8)
 #define V5V5          conv_mv_v5v5(get_mv(&afe_0, GRAV_ADC_V5V5))
-#define V5V5N         conv_mv_v5v5n(get_mv(&afe_0, GRAV_ADC_V5V5N), V5V5)
+#define V5V5N         conv_mv_v5v5n(get_mv(&afe_0, GRAV_ADC_V5V5N))
 #define V29           conv_mv_v29(get_mv(&afe_0, GRAV_ADC_V29))
 #define ADC_LM20      lm20_conv_mv_degc(get_mv(&afe_0, GRAV_ADC_ADC_TEMP))
 #define MCU_TEMP      (int32_t)(((1.43 - (3 * mcu_temp))/4.3)+25)
+
+#define P_OUT_A       lm5331_conv_mv_db_out(get_mv(&afe_a, GRAV_ADC_P_IN),get_mv(&afe_a, GRAV_ADC_P_OUT))
+#define I_PA_A        get_i_pa(&afe_a)
+#define T_PRE_RX_A    lm20_conv_mv_degc(get_mv(&afe_a, GRAV_ADC_T_PRE_RX))
+#define T_LDO_A       lm20_conv_mv_degc(get_mv(&afe_a, GRAV_ADC_T_LDO))
+#define P_IN_A        lm5331_conv_mv_db_in(get_mv(&afe_a, GRAV_ADC_P_IN),get_mv(&afe_a, GRAV_ADC_P_OUT))
+#define T_PA_A        lm20_conv_mv_degc(get_mv(&afe_a, GRAV_ADC_T_PA))
+#define T_PRE_TX2_A   lm20_conv_mv_degc(get_mv(&afe_a, GRAV_ADC_T_PRE_TX2))
+#define T_PRE_TX3_A   lm20_conv_mv_degc(get_mv(&afe_a, GRAV_ADC_T_PRE_TX3))
+
+#define P_OUT_B       lm5331_conv_mv_db_out(get_mv(&afe_b, GRAV_ADC_P_IN),get_mv(&afe_b, GRAV_ADC_P_OUT))
+#define I_PA_B        get_i_pa(&afe_b)
+#define T_PRE_RX_B    lm20_conv_mv_degc(get_mv(&afe_b, GRAV_ADC_T_PRE_RX))
+#define T_LDO_B       lm20_conv_mv_degc(get_mv(&afe_b, GRAV_ADC_T_LDO))
+#define P_IN_B        lm5331_conv_mv_db_in(get_mv(&afe_b, GRAV_ADC_P_IN),get_mv(&afe_b, GRAV_ADC_P_OUT))
+#define T_PA_B        lm20_conv_mv_degc(get_mv(&afe_b, GRAV_ADC_T_PA))
+#define T_PRE_TX2_B   lm20_conv_mv_degc(get_mv(&afe_b, GRAV_ADC_T_PRE_TX2))
+#define T_PRE_TX3_B   lm20_conv_mv_degc(get_mv(&afe_b, GRAV_ADC_T_PRE_TX3))
 
 
 #endif /* INCLUDES_GRAVITON_H_ */

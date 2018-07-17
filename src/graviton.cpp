@@ -25,12 +25,11 @@ uint32_t get_mv(AMC7891 *afe, ADC_CHANNEL channel)
 	return (in * 5 * 1000) / 1024;
 }
 
-int32_t conv_mv_v5v5n(uint32_t in_mv, uint32_t v5)
+int32_t conv_mv_v5v5n(uint32_t in_mv)
 {
 	int32_t in = (int32_t)in_mv;
-	int32_t ref = (int32_t)v5;
 
-	return (6800*ref - 2000*in - 6800*in)/(2*6800 + 2000);
+	return (22*in)/5 - (17*3300)/5;
 }
 
 uint32_t conv_mv_v5v5(uint32_t in_mv)
@@ -43,9 +42,26 @@ uint32_t conv_mv_v29(uint32_t in_mv)
 	return (in_mv * 533) / 23;
 }
 
+uint8_t get_i_pa(AMC7891 *afe)
+{
+	uint64_t ave = 0;
+
+	for( unsigned i = 0; i < 10000; i++)
+	{
+
+		ave += afe->read_adc(GRAV_ADC_I_PA);
+	}
+
+	ave = (ave * 5 * 1000) / 1024;
+
+	ave /= 10000;
+
+	return (ave * 282) / 100;
+}
+
 uint32_t conv_mv_i_pa(uint32_t in_mv)
 {
-	return (in_mv*1000)/2820;
+	return (in_mv * 282) / 100;
 }
 
 uint8_t switch_to_ext_osc()

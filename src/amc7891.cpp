@@ -42,7 +42,7 @@ void AMC7891::init()
 	write_reg(AMC_ADC_ENABLE, 0x6DE0);
 
 	// Trigger the ADC
-	write_reg(AMC_AMC_CONFIG, 0x3000);
+	write_reg(AMC_AMC_CONFIG, 0x3300);
 }
 
 

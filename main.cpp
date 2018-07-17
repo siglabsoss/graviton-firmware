@@ -67,7 +67,7 @@ void init()
 
 	// Set SPI bus format
 	spi_bus.format(8,1);
-	spi_bus.frequency(18000000);
+	spi_bus.frequency(1000000);
 
 	afe_a.init();
 	afe_b.init();
@@ -112,18 +112,35 @@ int main()
 	pc.printf("\033[2J");
 	while(1)
 	{
-		pc.printf("ADC_TEMP = %i\r\n", ADC_LM20);
-		pc.printf("AFE Temperature   A: %i   B: %i   MAIN: %i\n\r", AFE_CH_A_TEMP, AFE_CH_B_TEMP, AFE_MAIN_TEMP);
 		pc.printf("\033[0;0H");
-		pc.printf("V2V5 = %i\r\n", V2V5);
-		pc.printf("V1V8 = %i\r\n", V1V8);
-		pc.printf("V3V8 = %i\r\n", V3V8);
-		pc.printf("V5V5 = %i\r\n", V5V5);
-		pc.printf("V5V5N = %i\r\n", V5V5N);
-		pc.printf("V29 = %i\r\n", V29);
+		pc.printf("V2V5 = %i      \r\n", V2V5);
+		pc.printf("V1V8 = %i      \r\n", V1V8);
+		pc.printf("V3V8 = %i      \r\n", V3V8);
+		pc.printf("V5V5 = %i      \r\n", V5V5);
+		pc.printf("V5V5N = %i      \r\n", V5V5N);
+		pc.printf("V29 = %i      \r\n", V29);
+		pc.printf("ADC_TEMP = %i      \r\n", ADC_LM20);
+		pc.printf("AFE Temperature   A: %i         B: %i         MAIN: %i      \n\r\n", AFE_CH_A_TEMP, AFE_CH_B_TEMP, AFE_MAIN_TEMP);
 
+		pc.printf("P_OUT_A = %i      \r\n", P_OUT_A);
+		pc.printf("I_PA_A = %i      \r\n", I_PA_A);
+		pc.printf("T_PRE_RX_A = %i      \r\n", T_PRE_RX_A);
+		pc.printf("T_LDO_A = %i      \r\n", T_LDO_A);
+		pc.printf("P_IN_A = %i      \r\n", P_IN_A);
+		pc.printf("T_PA_A = %i      \r\n", T_PA_A);
+		pc.printf("T_PRE_TX2_A = %i      \r\n", T_PRE_TX2_A);
+		pc.printf("T_PRE_TX3_A = %i      \r\n\n", T_PRE_TX3_A);
 
-		wait(1);
+		pc.printf("P_OUT_B = %i      \r\n", P_OUT_B);
+		pc.printf("I_PA_B = %i      \r\n", I_PA_B);
+		pc.printf("T_PRE_RX_B = %i      \r\n", T_PRE_RX_B);
+		pc.printf("T_LDO_B = %i      \r\n", T_LDO_B);
+		pc.printf("P_IN_B = %i      \r\n", P_IN_B);
+		pc.printf("T_PA_B = %i      \r\n", T_PA_B);
+		pc.printf("T_PRE_TX2_B = %i      \r\n", T_PRE_TX2_B);
+		pc.printf("T_PRE_TX3_B = %i      \r\n\n", T_PRE_TX3_B);
+
+		wait_ms(100);
 	}
 
 }
