@@ -67,18 +67,23 @@ class AMC7891
 	SPI *spi;
 	DigitalOut *cs;
 
+	uint16_t read_reg(unsigned char addr);
+	void write_reg(unsigned char addr, uint16_t val);
+
 public:
 	AMC7891(SPI *bus, PinName select);
 
+	void init();
+
 	void enable_dacs();
 	void write_dac(DAC_CHANNEL channel, uint16_t val);
-	uint16_t read_reg(unsigned char addr);
-	void write_reg(unsigned char addr, uint16_t val);
-	void write_dac(unsigned char addr, uint16_t val);
-	void init();
-	void set_gpio(uint16_t val);
+
 	void config_gpio(uint16_t gpios, uint16_t init);
+	void set_gpio(uint16_t val);
+
 	uint16_t read_adc(ADC_CHANNEL channel);
+
+	uint16_t read_temperature();
 };
 
 

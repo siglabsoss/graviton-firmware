@@ -17,56 +17,35 @@ void make_afe_dac_safe(AMC7891 *afe)
 	afe->enable_dacs();
 }
 
-
-uint32_t get_v2v5(AMC7891 *afe)
+uint32_t get_mv(AMC7891 *afe, ADC_CHANNEL channel)
 {
 	uint32_t in;
-	in = afe->read_adc(GRAV_ADC_V2V5);
+	in = afe->read_adc(channel);
+
 	return (in * 5 * 1000) / 1024;
 }
 
-uint32_t get_v1v8(AMC7891 *afe)
+int32_t conv_mv_v5v5n(uint32_t in_mv, uint32_t v5)
 {
-	uint32_t in;
-	in = afe->read_adc(GRAV_ADC_V1V8);
-	return (in * 5 * 1000) / 1024;
+	int32_t in = (int32_t)in_mv;
+	int32_t ref = (int32_t)v5;
+
+	return (6800*ref - 2000*in - 6800*in)/(2*6800 + 2000);
 }
 
-uint32_t get_v3v8(AMC7891 *afe)
+uint32_t conv_mv_v5v5(uint32_t in_mv)
 {
-	uint32_t in;
-	in = afe->read_adc(GRAV_ADC_V3V8);
-	return (in * 5 * 1000) / 1024;
+	return (in_mv * 880) / 200;
 }
 
-uint32_t get_v5v5(AMC7891 *afe)
+uint32_t conv_mv_v29(uint32_t in_mv)
 {
-	uint32_t in;
-	in = afe->read_adc(GRAV_ADC_V5V5_V);
-	return (in * 5 * 1000*88) / (1024*20);
+	return (in_mv * 533) / 23;
 }
 
-uint32_t get_v5v5n(AMC7891 *afe)
+uint32_t conv_mv_i_pa(uint32_t in_mv)
 {
-	uint32_t in, vhi;
-	in = (afe->read_adc(GRAV_ADC_V5V5N_V) * 5 * 1000) / 1024;
-
-	return (6800*get_v5v5(afe) - in*6800 - in*2000) / 6800;
-}
-
-uint32_t get_v29(AMC7891 *afe)
-{
-	uint32_t in;
-	in = afe->read_adc(GRAV_ADC_V29_V);
-	return (in * 333125) / 2944;
-}
-
-int32_t get_adc_temp(AMC7891 *afe)
-{
-	uint32_t in;
-	in = (afe->read_adc(GRAV_ADC_ADC_TEMP)* 5 * 1000) / 1024;
-
-	return -(100*in - 186630)/1169;
+	return (in_mv*1000)/2820;
 }
 
 uint8_t switch_to_ext_osc()

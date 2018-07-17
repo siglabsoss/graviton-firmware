@@ -112,5 +112,8 @@ uint16_t AMC7891::read_reg(unsigned char addr)
 	return (out[1] << 8) | (out[2]);
 }
 
-
+uint16_t AMC7891::read_temperature()
+{
+	return read_reg(AMC_TEMP_DATA) / 8;
+}
 

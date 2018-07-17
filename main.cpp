@@ -5,8 +5,8 @@
 
 
 Serial pc(PA_2, NC);
-
 Serial fpga(PA_9, PA_10);
+
 DigitalOut buzzer(PA_0);
 DigitalOut osc_en(PA_11);
 SPI spi_bus(PB_5, PB_4, PB_3);
@@ -23,16 +23,6 @@ DigitalOut synth_cs(PA_5);
 DigitalOut dac_rst(PB_7);
 DigitalOut adc_rst(PA_6);
 DigitalOut synth_rst(PA_7);
-
-AnalogIn adc_temp(ADC_TEMP);
-AnalogIn adc_batt(ADC_VBAT);
-AnalogIn adc_vref1(ADC_VREF1);
-AnalogIn adc_vref2(ADC_VREF2);
-
-
-
-
-
 
 
 
@@ -87,16 +77,15 @@ void init()
 	afe_0.config_gpio(GRAV_MAIN_ENABLES, GRAV_MAIN_DEFAULTS);
 
 	// Configure RF AFE
-	afe_a.config_gpio(GRAV_CH_ENABLES, GRAV_CH_DEFAULTS);
-	afe_b.config_gpio(GRAV_CH_ENABLES, GRAV_CH_DEFAULTS);
+	afe_a.config_gpio(GRAV_AFE_ENABLES, GRAV_AFE_SAFE);
+	afe_b.config_gpio(GRAV_AFE_ENABLES, GRAV_AFE_SAFE);
 
 	// Wait for Copper Suicide to come up
 	wait_ms(500);
 
-	if( (get_v2v5(&afe_0) < 100) &&
-		(get_v1v8(&afe_0) < 100) ) {
+	// If I/O busses are unpowered then power them
+	if( (V2V5 < 100) && (V1V8 < 100) )
 		afe_0.set_gpio(GRAV_MAIN_POWER_ON_TX_OFF);
-	}
 	else {
 		pc.printf("ERROR: BUS IS POWERED. HALTING\r\n");
 		while(1) { }
@@ -113,31 +102,26 @@ void init()
 
 
 
+
+
+
 int main()
 {
 	init();
 
-	uint16_t temp_ch_b, temp_ch_a, temp_main, val;
-
 	pc.printf("\033[2J");
 	while(1)
 	{
-
-		temp_ch_b = afe_b.read_reg(AMC_TEMP_DATA) / 8;
-		temp_ch_a = afe_a.read_reg(AMC_TEMP_DATA) / 8;
-		temp_main = afe_0.read_reg(AMC_TEMP_DATA) / 8;
-
-
+		pc.printf("ADC_TEMP = %i\r\n", ADC_LM20);
+		pc.printf("AFE Temperature   A: %i   B: %i   MAIN: %i\n\r", AFE_CH_A_TEMP, AFE_CH_B_TEMP, AFE_MAIN_TEMP);
 		pc.printf("\033[0;0H");
-		pc.printf("V2V5 = %u\r\n", get_v2v5(&afe_0));
-		pc.printf("V1V8 = %u\r\n", get_v1v8(&afe_0));
-		pc.printf("V3V8 = %u\r\n", get_v3v8(&afe_0));
-		pc.printf("V5V5N_V = %u\r\n", get_v5v5n(&afe_0));
-		pc.printf("V5V5_V = %u\r\n", get_v5v5(&afe_0));
-		pc.printf("V29_V = %u\r\n", get_v29(&afe_0));
-		pc.printf("ADC_TEMP = %i\r\n", get_adc_temp(&afe_0));
+		pc.printf("V2V5 = %i\r\n", V2V5);
+		pc.printf("V1V8 = %i\r\n", V1V8);
+		pc.printf("V3V8 = %i\r\n", V3V8);
+		pc.printf("V5V5 = %i\r\n", V5V5);
+		pc.printf("V5V5N = %i\r\n", V5V5N);
+		pc.printf("V29 = %i\r\n", V29);
 
-		pc.printf("AFE Temperature   A: %i   B: %i   MAIN: %i\n\r", temp_ch_a, temp_ch_b, temp_main);
 
 		wait(1);
 	}
