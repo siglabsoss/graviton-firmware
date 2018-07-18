@@ -81,6 +81,7 @@ public:
 	void config_gpio(uint16_t gpios, uint16_t init);
 	void set_gpio(uint16_t val);
 
+	void config_adc(uint8_t val);
 	uint16_t read_adc(ADC_CHANNEL channel);
 
 	uint16_t read_temperature();

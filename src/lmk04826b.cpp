@@ -1,0 +1,168 @@
+/*
+ * lmk04826b.cpp
+ *
+ *  Created on: Jul 18, 2018
+ *      Author: karthik
+ */
+
+#include "lmk04826b.h"
+#include "stdint.h"
+
+uint32_t lmk04826b_rom[] =
+{
+		0x000080, // assert reset
+		0x000000, // de-assert reset
+		0x000200, // normal operation (not powerdown)
+
+		0x010014, // CLKout0_1
+		0x010155,
+		0x010300,
+		0x010402,
+		0x010500,
+		0x0106F1,
+		0x010706,
+
+		0x01080A, // CLKout2_3
+		0x010955,
+		0x010B00,
+		0x010C02,
+		0x010D00,
+		0x010EF1,
+		0x010F05,
+
+		0x011014, // CLKout4_5
+		0x011155,
+		0x011300,
+		0x011402,
+		0x011500,
+		0x0116F1,
+		0x011706,
+
+		0x01180A, // CLKout6_7
+		0x011955,
+		0x011B00,
+		0x011C02,
+		0x011D00,
+		0x011EF1,
+		0x011F05,
+
+		0x012014, // CLKout10
+		0x012155,
+		0x012300,
+		0x012402,
+		0x012500,
+		0x0126F1,
+		0x012706,
+
+		0x012814, // CLKout11
+		0x012955,
+		0x012B00,
+		0x012C02,
+		0x012D00,
+		0x012EF1,
+		0x012F0E, // invert polarity of DCLKOUT10 to fix polarity swap in Graviton design
+
+		0x013014, // CLKout12
+		0x013155,
+		0x013300,
+
+		0x013402,
+		0x013500,
+		0x0136F1,
+
+		0x013706, // CLKout13
+		0x013834,
+		0x013900,
+		0x013A0C,
+		0x013B00,
+		0x013C00,
+		0x013D08,
+		0x013E03,
+		0x013F03,
+		0x01400F,
+		0x014100,
+		0x014200,
+		0x014311, // enable sync and set sync mode to 1
+		0x014331, // sync_pol = 1
+		0x014311, // sync_pol = 0 causing sync
+		0x014400,
+		0x01457F,
+		0x01461B,
+		0x01473A,
+		0x014802,
+		0x014942,
+		0x014A02,
+		0x014B16,
+		0x014C00,
+		0x014D00,
+		0x014EC0,
+		0x014F7F,
+		0x015003,
+		0x015102,
+		0x015200,
+		0x015300,
+		0x015401,
+		0x015500,
+		0x015601,
+		0x015700,
+		0x015896,
+		0x015900,
+		0x015A0A,
+		0x015BD4,
+		0x015C20,
+		0x015D00,
+		0x015E00,
+		0x015F0B,
+		0x016000,
+		0x016108,
+		0x016230,
+		0x016300,
+		0x016400,
+		0x016519,
+		0x017C18,
+		0x017D77,
+		0x016600,
+		0x016700,
+		0x016819,
+		0x016959,
+		0x016A20,
+		0x016B00,
+		0x016C00,
+		0x016D00,
+		0x016E13,
+		0x017300,
+		0x1FFD00,
+		0x1FFE00,
+		0x1FFF53,
+};
+
+LMK04826B::LMK04826B(SPI *bus, PinName select)
+{
+	spi = bus;
+	cs = new DigitalOut(select,1);
+}
+
+void LMK04826B::init()
+{
+	unsigned i;
+
+	spi->format(8,0);
+
+	for( i = 0; i < sizeof(lmk04826b_rom); i++)
+	{
+		wait_us(1);
+
+		cs->write(0);
+
+		spi->write((const char*)(lmk04826b_rom + i), 3, 0, 0);
+
+		cs->write(1);
+	}
+
+
+	spi->format(8,1);
+}
+
+
+
+

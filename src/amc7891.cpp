@@ -10,7 +10,7 @@
 
 void AMC7891::write_dac(DAC_CHANNEL channel, uint16_t val)
 {
-	write_reg(AMC_DAC0_DATA + (0x0F & (int)channel), val);
+	write_reg(AMC_DAC0_DATA + (0x0F & (int)channel), 0x03FF & val);
 }
 
 void AMC7891::enable_dacs()
@@ -41,8 +41,11 @@ void AMC7891::init()
 	// Enable all ADCs
 	write_reg(AMC_ADC_ENABLE, 0x6DE0);
 
+	// set ADC gain
+	write_reg(AMC_ADC_GAIN, 0x0000);
+
 	// Trigger the ADC
-	write_reg(AMC_AMC_CONFIG, 0x3300);
+	write_reg(AMC_AMC_CONFIG, 0x1300);
 }
 
 
@@ -60,8 +63,15 @@ void AMC7891::config_gpio(uint16_t gpios, uint16_t init)
 	write_reg(AMC_GPIO_CONFIG, 0x0FFF & gpios);
 }
 
+void AMC7891::config_adc(uint8_t val)
+{
+	write_reg(AMC_ADC_GAIN, 0xFF00 & (((uint16_t)val)<<8));
+}
+
 uint16_t AMC7891::read_adc(ADC_CHANNEL channel)
 {
+	write_reg(AMC_AMC_CONFIG, 0x1300);
+	wait_us(1000);
 	return read_reg(AMC_ADC0_DATA + (0x0F & (int)channel));
 }
 

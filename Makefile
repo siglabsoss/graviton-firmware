@@ -355,6 +355,7 @@ OBJECTS += ./src/amc7891.o
 OBJECTS += ./src/graviton.o
 OBJECTS += ./src/lm20.o
 OBJECTS += ./src/lm5531.o
+OBJECTS += ./src/lmk04826b.o
 
 INCLUDE_PATHS += -I../
 INCLUDE_PATHS += -I../.

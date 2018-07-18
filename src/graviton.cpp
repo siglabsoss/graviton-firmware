@@ -10,19 +10,19 @@
 
 void make_afe_dac_safe(AMC7891 *afe)
 {
-	afe->write_dac(AMC_DAC0, GRAV_AFE_DAC0_SAFE);
-	afe->write_dac(AMC_DAC1, GRAV_AFE_DAC1_SAFE);
-	afe->write_dac(AMC_DAC2, GRAV_AFE_DAC2_SAFE);
-	afe->write_dac(AMC_DAC3, GRAV_AFE_DAC3_SAFE);
+	afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_SAFE);
+	afe->write_dac(GRAV_DAC_VGSET, GRAV_DAC_VGSET_SAFE);
+	afe->write_dac(GRAV_DAC_TX_SW, GRAV_DAC_TX_SW_SAFE);
+	afe->write_dac(GRAV_TX_LNA_DIS, GRAV_TX_LNA_DIS_SAFE);
 	afe->enable_dacs();
 }
 
-uint32_t get_mv(AMC7891 *afe, ADC_CHANNEL channel)
+uint32_t get_mv(AMC7891 *afe, ADC_CHANNEL channel, GAIN gain)
 {
 	uint32_t in;
 	in = afe->read_adc(channel);
 
-	return (in * 5 * 1000) / 1024;
+	return (in * 5 * 1000) / 1024 / gain;
 }
 
 int32_t conv_mv_v5v5n(uint32_t in_mv)
@@ -42,26 +42,47 @@ uint32_t conv_mv_v29(uint32_t in_mv)
 	return (in_mv * 533) / 23;
 }
 
-uint8_t get_i_pa(AMC7891 *afe)
-{
-	uint64_t ave = 0;
-
-	for( unsigned i = 0; i < 10000; i++)
-	{
-
-		ave += afe->read_adc(GRAV_ADC_I_PA);
-	}
-
-	ave = (ave * 5 * 1000) / 1024;
-
-	ave /= 10000;
-
-	return (ave * 282) / 100;
-}
-
 uint32_t conv_mv_i_pa(uint32_t in_mv)
 {
-	return (in_mv * 282) / 100;
+	return (in_mv * 100) / 282;
+}
+
+int32_t conv_dac_counts_to_mv_for_vgg_circuit(uint32_t counts)
+{
+	int32_t out;
+
+	out = -(int32_t(0x3FF & counts) * 5000 * 2) / 1023;
+
+	return out;
+}
+
+uint32_t conv_mv_to_dac_counts_for_vgg_circuit(int32_t in_mv)
+{
+	int32_t op_amp_out;
+	uint32_t out;
+
+	// sanity check input (in_mv should be a negative number)
+	if( 0 < in_mv ) in_mv = 0;
+
+	// no reason go above below 4900mV
+	if( -4900 > in_mv ) in_mv = -4900;
+
+	// first the Op Amp divides the *output* by 2 and inverts it
+	op_amp_out = -in_mv / 2;
+
+	// sanity check op amp output (op amp output should be positive number)
+	if( 0 > op_amp_out ) op_amp_out = 0;
+
+	// dont go above 5000 because DAC output will wrap around (BAD!!)
+	if( 5000 < op_amp_out ) op_amp_out = 5000;
+
+	// calculate output in (10-bit) DAC counts, 5000mV full scale
+	out = (1023 * op_amp_out) / 5000;
+
+	// sanity check again that DAC is less than full scale (so it doesn't wrap around)
+	if( 1023 < out ) out = 1023;
+
+	return out;
 }
 
 uint8_t switch_to_ext_osc()
@@ -122,7 +143,7 @@ uint8_t switch_to_ext_osc()
 }
 
 
-uint8_t switch_to_internal_clock()
+uint8_t switch_to_int_osc()
 {
     RCC_ClkInitTypeDef RCC_ClkInitStruct;
     RCC_OscInitTypeDef RCC_OscInitStruct;
