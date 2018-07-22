@@ -85,6 +85,9 @@ public:
 	uint16_t read_adc(ADC_CHANNEL channel);
 
 	uint16_t read_temperature();
+
+public:
+	uint32_t gain;
 };
 
 

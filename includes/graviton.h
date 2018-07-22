@@ -78,16 +78,34 @@ enum GAIN
  * All the different modes that the AFE can be in
  */
 
-#define GRAV_AFE_SAFE (GRAV_EN_LNA_DIS | GRAV_EN_DSA)
+
+#define GRAV_RECEIVE (GRAV_EN_PRE_RX_EN | GRAV_EN_RX_EN)
+#define GRAV_TRANSMIT (GRAV_EN_DSA | GRAV_EN_LNA_DIS | GRAV_EN_PRE_TX_EN | GRAV_EN_TX_EN)
 
 
+#define GRAV_DAC_TX_SW_RX         (0x0000)
+#define GRAV_DAC_TX_SW_TX         (0x02A3)
 
+#define GRAV_DAC_TX_LNA_DIS_TX    (0x0000)
+#define GRAV_DAC_TX_LNA_DIS_RX    (0x03FF)
 
+#define GRAV_DAC_VGSET_RX         (0x03FF)
+//#define GRAV_DAC_VGSET_TX     -- SET THIS TO CALIBRATION CURRENT
 
-#define GRAV_DAC_PA_EN_SAFE       (0x0000) // turn off PA
-#define GRAV_DAC_VGSET_SAFE       (0x03FF) // set PA gate voltage to minimum (remember its inverted)
-#define GRAV_DAC_TX_SW_SAFE       (0x02A3) // set TX/RX switch to RX (3.6V)
-#define GRAV_TX_LNA_DIS_SAFE      (0x03FF) // disable the TX LNA
+#define GRAV_DAC_PA_EN_RX         (0x0000)
+#define GRAV_DAC_PA_EN_TX         (0x03FF)
+
+/*
+ * Safest settings for the AFE
+ */
+
+#define GRAV_AFE_SAFE             (GRAV_EN_LNA_DIS | GRAV_EN_DSA)   // everything off
+
+#define GRAV_DAC_PA_EN_SAFE       GRAV_DAC_PA_EN_RX                 // turn off PA
+#define GRAV_DAC_VGSET_SAFE       GRAV_DAC_VGSET_RX                 // set PA gate voltage to minimum (remember its inverted)
+#define GRAV_DAC_TX_SW_SAFE       GRAV_DAC_TX_SW_RX                 // set TX/RX switch to RX (3.6V)
+#define GRAV_DAC_TX_LNA_DIS_SAFE  GRAV_DAC_TX_LNA_DIS_RX            // disable the TX LNA
+
 
 
 int32_t get_adc_temp(AMC7891 *afe);
@@ -101,6 +119,9 @@ int32_t conv_dac_counts_to_mv_for_vgg_circuit(uint32_t counts);
 uint32_t conv_mv_to_dac_counts_for_vgg_circuit(int32_t in_mv);
 uint8_t switch_to_ext_osc();
 uint8_t switch_to_int_osc();
+
+void switch_to_rx(AMC7891 *afe);
+void switch_to_tx(AMC7891 *afe);
 
 void make_afe_dac_safe(AMC7891 *afe);
 

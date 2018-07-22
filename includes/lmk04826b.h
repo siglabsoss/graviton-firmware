@@ -14,9 +14,10 @@ class LMK04826B
 {
 	SPI *spi;
 	DigitalOut *cs;
+	DigitalOut *rst;
 
 public:
-	LMK04826B(SPI *bus, PinName select);
+	LMK04826B(SPI *bus, PinName select, PinName rst_pin);
 
 	void init();
 };

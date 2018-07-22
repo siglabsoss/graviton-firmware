@@ -13,8 +13,32 @@ void make_afe_dac_safe(AMC7891 *afe)
 	afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_SAFE);
 	afe->write_dac(GRAV_DAC_VGSET, GRAV_DAC_VGSET_SAFE);
 	afe->write_dac(GRAV_DAC_TX_SW, GRAV_DAC_TX_SW_SAFE);
-	afe->write_dac(GRAV_TX_LNA_DIS, GRAV_TX_LNA_DIS_SAFE);
+	afe->write_dac(GRAV_TX_LNA_DIS, GRAV_DAC_TX_LNA_DIS_SAFE);
 	afe->enable_dacs();
+}
+
+void switch_to_rx(AMC7891 *afe)
+{
+	// sequencing really matters here
+
+	afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_RX);
+	afe->write_dac(GRAV_DAC_VGSET, GRAV_DAC_VGSET_RX);
+	afe->write_dac(GRAV_DAC_TX_SW, GRAV_DAC_TX_SW_RX);
+	afe->write_dac(GRAV_TX_LNA_DIS, GRAV_DAC_TX_LNA_DIS_RX);
+
+	afe->set_gpio(GRAV_RECEIVE);
+}
+
+void switch_to_tx(AMC7891 *afe)
+{
+	// sequencing really matters here
+
+	afe->set_gpio(GRAV_RECEIVE);
+
+	afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_TX);
+	afe->write_dac(GRAV_DAC_VGSET, afe->gain);
+	afe->write_dac(GRAV_DAC_TX_SW, GRAV_DAC_TX_SW_TX);
+	afe->write_dac(GRAV_TX_LNA_DIS, GRAV_DAC_TX_LNA_DIS_TX);
 }
 
 uint32_t get_mv(AMC7891 *afe, ADC_CHANNEL channel, GAIN gain)
@@ -29,8 +53,10 @@ int32_t conv_mv_v5v5n(uint32_t in_mv)
 {
 	int32_t in = (int32_t)in_mv;
 
-	return (22*in)/5 - (17*3300)/5;
+	return (22 * in-85000)/5;
 }
+
+
 
 uint32_t conv_mv_v5v5(uint32_t in_mv)
 {

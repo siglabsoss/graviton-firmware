@@ -3,6 +3,9 @@
 #include "amc7891.h"
 #include "graviton.h"
 #include "lmk04826b.h"
+#include "lmk04133.h"
+#include "ads42lb69.h"
+#include "dac3484.h"
 
 
 Serial pc(PA_2, NC);
@@ -10,21 +13,19 @@ Serial fpga(PA_9, PA_10);
 
 DigitalOut buzzer(PA_0);
 DigitalOut osc_en(PA_11);
+
 SPI spi_bus(PB_5, PB_4, PB_3);
 
 AMC7891 afe_a(&spi_bus, PA_15);
 AMC7891 afe_b(&spi_bus, PA_12);
 AMC7891 afe_0(&spi_bus, PB_0);
 
-LMK04826B lmk04826b(&spi_bus, PA_4);
+LMK04826B lmk04826b(&spi_bus, PA_4, PA_3);
+LMK04133 lmk04133(&spi_bus, PA_5, PA_7);
+ADS42LB69 ads42lb69(&spi_bus, PB_1, PA_6);
+DAC3484 dac3484(&spi_bus, PB_6, PB_7);
 
-DigitalOut dac_cs(PB_6);
-DigitalOut adc_cs(PB_1);
-DigitalOut synth_cs(PA_5);
 
-DigitalOut dac_rst(PB_7);
-DigitalOut adc_rst(PA_6);
-DigitalOut synth_rst(PA_7);
 
 
 void dump_telemetry()
@@ -57,6 +58,7 @@ void dump_telemetry()
 	pc.printf("T_PA_B        = %i\r\n", T_PA_B);
 	pc.printf("T_PRE_TX2_B   = %i\r\n", T_PRE_TX2_B);
 	pc.printf("T_PRE_TX3_B   = %i\r\n", T_PRE_TX3_B);
+	pc.printf("DAC_TEMPDATA  = %i\r\n", dac3484.get_temp());
 }
 
 
@@ -104,13 +106,14 @@ void check_busses()
 	if( (1700 > value) || (1900 < value) ) go_safe_and_shutdown("1.8V rail");
 
 	value = V3V8;
-	if( (3600 > value) || (4000 < value) ) go_safe_and_shutdown("3.8V rail");
+	if( (3550 > value) || (4000 < value) ) go_safe_and_shutdown("3.8V rail");
 
-	value = V5V5;
-	if( (5350 > value) || (5650 < value) ) go_safe_and_shutdown("5.5V rail");
+	//value = V5V5;
+	//if( (5350 > value) || (5650 < value) ) go_safe_and_shutdown("5.5V rail");
 
-	value = V5V5N;
-	if( (-5650 > value) || (-5350 < value) ) go_safe_and_shutdown("negative 5.5V rail");
+//  Disable Until suitable 5V telemetry supply regulator can be found.
+//	value = V5V5N;
+//	if( (-5650 > value) || (-5350 < value) ) go_safe_and_shutdown("negative 5.5V rail");
 
 	value = V29;
 	if( (28750 > value) || (29250 < value) ) go_safe_and_shutdown("29V rail");
@@ -127,7 +130,7 @@ void check_busses()
 }
 
 
-void calibrate_power_amplifier()
+void calibrate_power_amplifier(AMC7891 *afe)
 {
 	uint32_t counts;
 	uint32_t v29_bus;
@@ -137,63 +140,33 @@ void calibrate_power_amplifier()
 	/*
 	 * Channel A
 	 */
-	pc.printf("LOG: Calibrating power amplifier A\r\n");
+	pc.printf("LOG: Calibrating power amplifier\r\n");
 
-	// Set VGG to -5000mV
-	counts = conv_mv_to_dac_counts_for_vgg_circuit( -5000 /*mV*/ );
-	afe_a.write_dac(GRAV_DAC_VGSET, counts);
+	// Set VGG to -3800mV as a starting point (never seems to be lower than this)
+	counts = conv_mv_to_dac_counts_for_vgg_circuit( -3800 /*mV*/ );
+	afe->write_dac(GRAV_DAC_VGSET, counts);
 
 	// Enable those scary Power Amplfiers
-	afe_a.write_dac(GRAV_DAC_PA_EN, 0x3FF);
+	afe->write_dac(GRAV_DAC_PA_EN, 0x3FF);
 
 	// Bring it down until shoot-thru current is 100mA
 
-	while( 100 /*mA*/ > I_PA_A )
+	while( 100 /*mA*/ > conv_mv_i_pa(get_mv(afe, GRAV_ADC_I_PA, GAIN_1X)) )
 	{
-		afe_a.write_dac(GRAV_DAC_VGSET, --counts);
+		afe->write_dac(GRAV_DAC_VGSET, --counts);
+		wait_ms(1);
 		// If the input rail drops by more than 100mV then something is wrong
 		if( (v29_bus - 100 /*mV*/)  > V29 ) go_safe_and_shutdown("V29 drop during calibration");
-		wait_us(500);
-		if( (v29_bus - 100 /*mV*/)  > V29 ) go_safe_and_shutdown("V29 drop during calibration");
 		pc.printf(".");
-		wait_ms(100); // no reason to do this fast
+		wait_ms(25); // no reason to do this fast
 	}
 	counts += 2;
-	afe_a.write_dac(GRAV_DAC_VGSET, counts);
-	pc.printf("\r\nLOG: Done with power amplifier A (Vgg = %imV, I = %imA)\r\n",
+	afe->write_dac(GRAV_DAC_VGSET, counts);
+	pc.printf("\r\nLOG: Done with power amplifier(Vgg = %imV, I = %imA)\r\n",
 			conv_dac_counts_to_mv_for_vgg_circuit(counts),
-			I_PA_A);
+			conv_mv_i_pa(get_mv(afe, GRAV_ADC_I_PA, GAIN_1X)));
 
-
-	/*
-	 * Channel B
-	 */
-	pc.printf("LOG: Calibrating power amplifier B\r\n");
-
-	// Set VGG to -5000mV
-	counts = conv_mv_to_dac_counts_for_vgg_circuit( -5000 /*mV*/ );
-	afe_b.write_dac(GRAV_DAC_VGSET, counts);
-
-	// Enable those scary Power Amplfiers
-	afe_b.write_dac(GRAV_DAC_PA_EN, 0x3FF);
-
-	// Bring it down until shoot-thru current is 100mA
-
-	while( 100 /*mA*/ > I_PA_B )
-	{
-		afe_b.write_dac(GRAV_DAC_VGSET, --counts);
-		// If the input rail drops by more than 100mV then something is wrong
-		if( (v29_bus - 100 /*mV*/)  > V29 ) go_safe_and_shutdown("V29 drop during calibration");
-		wait_us(500);
-		if( (v29_bus - 100 /*mV*/)  > V29 ) go_safe_and_shutdown("V29 drop during calibration");
-		pc.printf(".");
-		wait_ms(100); // no reason to do this fast
-	}
-	counts += 2;
-	afe_b.write_dac(GRAV_DAC_VGSET, counts);
-	pc.printf("\r\nLOG: Done with power amplifier B (Vgg = %imV, I = %imA)\r\n",
-			conv_dac_counts_to_mv_for_vgg_circuit(counts),
-			I_PA_B);
+	afe->gain = counts;
 }
 
 
@@ -203,14 +176,6 @@ void init()
 
 	buzzer = 0;       // buzzer doesn't actually work
 	osc_en = 0;       // not yet ready to setup oscillator
-
-	dac_cs = 1;       // DAC Chip Select
-	adc_cs = 1;       // ADC Chip Select
-	synth_cs = 1;     // Clock Synthesizer IC Chip Select
-
-	dac_rst = 0;      // Active Low DAC Reset (hold in reset)
-	adc_rst = 0;      // Active Low ADC Reset (hold in reset)
-	synth_rst = 0;    // Active Low Synthesizer Reset (hold in reset)
 
 	// Set serial port baud
 	pc.baud(115200);
@@ -230,7 +195,7 @@ void init()
 	pc.baud(115200);
 
 	if( 1 == ret )
-		pc.printf("LOG: external oscillator configured successfully\r\n");
+		pc.printf("LOG: external oscillator configured\r\n");
 	else
 	{
 		pc.printf("ERROR: EXTERNAL OSCILLATOR FAILED TO CONFIGURE. HALTING\r\n");
@@ -239,7 +204,7 @@ void init()
 
 	// Set SPI bus format
 	spi_bus.format(8,1);
-	spi_bus.frequency(2000000);
+	spi_bus.frequency(500000);
 
 	afe_a.init();
 	afe_b.init();
@@ -275,18 +240,16 @@ void init()
 
 	dump_telemetry();
 
-
 	// bring up clocks
-	pc.printf("LOG: initializing LMK04826B clock jitter cleaner\r\n");
 	lmk04826b.init();
-	pc.printf("LOG: finished initializing LMK04826B\r\n");
-
+	lmk04133.init();
+	ads42lb69.init();
+	dac3484.init();
 
 	// calibrating power amplifiers
 
-	calibrate_power_amplifier();
-
-	pc.printf("LOG: checking everything again...\r\n");
+	calibrate_power_amplifier(&afe_a);
+	calibrate_power_amplifier(&afe_b);
 
 	check_busses();
 
@@ -312,7 +275,6 @@ void init()
 	// set to lowest possible gain
 
 
-
 	// we probably want a function call for CS/S-MODEM to calibrate TX chain
 	// when its readdy to to so. This'll allow TX to opperate at max power.
 	// before this just set the DAC current (i.e. DAC gain) to minimum for
@@ -336,9 +298,14 @@ int main()
 {
 	init();
 
+	//switch_to_tx(&afe_a);
+	//switch_to_rx(&afe_b);
+
 	while(1)
 	{
-
+		dump_telemetry();
+		wait_ms(2000);
+		pc.printf("\033[2J\033[1;1H");
 	}
 
 }
