@@ -106,6 +106,39 @@ enum GAIN
 #define GRAV_DAC_TX_SW_SAFE       GRAV_DAC_TX_SW_RX                 // set TX/RX switch to RX (3.6V)
 #define GRAV_DAC_TX_LNA_DIS_SAFE  GRAV_DAC_TX_LNA_DIS_RX            // disable the TX LNA
 
+/*
+ * Messages from Copper Suicide
+ */
+
+#define CS_AFE_MASK               0x80
+#define CS_RX_FLAG_MASK           0x40
+#define CS_OP_CODE_MASK           0x3F
+
+#define CS_AFE_A                  0x00
+#define CS_AFE_B                  0x80
+#define CS_RX                     0x40
+
+#define CS_OP_CODE_0              0x00
+#define CS_OP_CODE_1              0x01
+#define CS_OP_CODE_2              0x02
+#define CS_OP_CODE_3              0x03
+#define CS_OP_CODE_4              0x04
+#define CS_OP_CODE_5              0x05
+#define CS_OP_CODE_6              0x06
+#define CS_OP_CODE_7              0x07
+#define CS_OP_CODE_8              0x08
+#define CS_OP_CODE_9              0x09
+#define CS_OP_CODE_10             0x0A
+#define CS_OP_CODE_11             0x0B
+#define CS_OP_CODE_12             0x0C
+#define CS_OP_CODE_13             0x0D
+#define CS_OP_CODE_14             0x0E
+#define CS_OP_CODE_15             0x0F
+#define CS_OP_CODE_16             0x10
+#define CS_OP_CODE_17             0x11
+#define CS_OP_CODE_18             0x12
+#define CS_OP_CODE_19             0x13
+#define CS_OP_CODE_63             0x3F
 
 
 int32_t get_adc_temp(AMC7891 *afe);
@@ -120,10 +153,13 @@ uint32_t conv_mv_to_dac_counts_for_vgg_circuit(int32_t in_mv);
 uint8_t switch_to_ext_osc();
 uint8_t switch_to_int_osc();
 
-void switch_to_rx(AMC7891 *afe);
+void switch_to_rx(AMC7891 *afe, uint8_t gain);
 void switch_to_tx(AMC7891 *afe);
+void switch_to_safe(AMC7891 *afe);
 
-void make_afe_dac_safe(AMC7891 *afe);
+void configure_grav_safe(AMC7891 *afe);
+void configure_grav_on_with_tx_off(AMC7891 *afe);
+void configure_grav_on_with_tx_on(AMC7891 *afe);
 
 /*
  * SHORTCUTS

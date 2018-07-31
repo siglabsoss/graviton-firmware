@@ -15,7 +15,7 @@ uint8_t _dac3484_rom[] = {
 		0x20,0x11,0x00,
 		0x24,0x1c,0x00,
 		0x1b,0x08,0x00,
-		0x03,0x00,0x01 };
+		0x03,0x00,0x00 }; // [15:12] COARSE_DAC, [0] SIF_TXENABLE (0 = use external TXENABLE pin, 1 = enable DAC output)
 
 DAC3484::DAC3484(SPI *bus, PinName select, PinName rst_pin)
 {
@@ -31,11 +31,12 @@ void DAC3484::set_current(uint8_t val)
 		return;
 	}
 
-	uint8_t config3[] = {03, 0x00, 0x01};
+	uint8_t config3[] = {0x03, 0x00, 0x00};
 
 	spi->format(8,0);
+	spi->frequency(500000);
 
-	config3[1] = 0x00 | (val << 4);
+	config3[1] = 0x00 | (0xF0 & (val << 4));
 
 	wait_us(1);
 
@@ -50,6 +51,7 @@ void DAC3484::set_current(uint8_t val)
 	cs->write(1);
 
 	spi->format(8,1);
+	spi->frequency(18000000);
 }
 
 int8_t DAC3484::get_temp()
@@ -58,6 +60,7 @@ int8_t DAC3484::get_temp()
 	uint8_t val[3];
 
 	spi->format(8,0);
+	spi->frequency(500000);
 
 	wait_us(1);
 
@@ -72,6 +75,7 @@ int8_t DAC3484::get_temp()
 	cs->write(1);
 
 	spi->format(8,1);
+	spi->frequency(18000000);
 
 	return (int8_t)val[1];
 }

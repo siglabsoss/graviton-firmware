@@ -62,23 +62,30 @@ enum DAC_CHANNEL
 	AMC_DAC3
 };
 
+enum AMC7891_MODE
+{
+	AMC7891_MODE_SAFE,
+	AMC7891_MODE_RX,
+	AMC7891_MODE_TX
+};
+
 class AMC7891
 {
 	SPI *spi;
 	DigitalOut *cs;
-
-	uint16_t read_reg(unsigned char addr);
-	void write_reg(unsigned char addr, uint16_t val);
 
 public:
 	AMC7891(SPI *bus, PinName select);
 
 	void init();
 
+	uint16_t read_reg(unsigned char addr);
+	void write_reg(unsigned char addr, uint16_t val);
+
 	void enable_dacs();
 	void write_dac(DAC_CHANNEL channel, uint16_t val);
 
-	void config_gpio(uint16_t gpios, uint16_t init);
+	void config_gpio(uint16_t gpios);
 	void set_gpio(uint16_t val);
 
 	void config_adc(uint8_t val);
@@ -87,7 +94,8 @@ public:
 	uint16_t read_temperature();
 
 public:
-	uint32_t gain;
+	uint32_t vg_setpoint;
+	AMC7891_MODE mode;
 };
 
 

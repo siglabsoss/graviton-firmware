@@ -8,38 +8,96 @@
 
 #include "graviton.h"
 
-void make_afe_dac_safe(AMC7891 *afe)
+void switch_to_rx(AMC7891 *afe, uint8_t gain)
+{
+	// sequencing really matters here
+
+	// If we're not already receiving then set DAC
+	if( AMC7891_MODE_RX != afe->mode )
+	{
+		afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_RX);
+		afe->write_dac(GRAV_DAC_VGSET, GRAV_DAC_VGSET_RX);
+		afe->write_dac(GRAV_DAC_TX_SW, GRAV_DAC_TX_SW_RX);
+		afe->write_dac(GRAV_TX_LNA_DIS, GRAV_DAC_TX_LNA_DIS_RX);
+	}
+
+	// Set the MSB of DSA[6:0] with 6-bit gain[5:0]
+	afe->set_gpio(GRAV_RECEIVE | ((gain<<1)&0x7E));
+
+	afe->mode = AMC7891_MODE_RX;
+}
+
+void switch_to_tx(AMC7891 *afe)
+{
+	if( AMC7891_MODE_TX == afe->mode ) return; // already transmitting
+
+	// sequencing really matters here
+
+	afe->set_gpio(GRAV_TRANSMIT);
+
+	afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_TX);
+	afe->write_dac(GRAV_DAC_VGSET, afe->vg_setpoint);
+	afe->write_dac(GRAV_DAC_TX_SW, GRAV_DAC_TX_SW_TX);
+	afe->write_dac(GRAV_TX_LNA_DIS, GRAV_DAC_TX_LNA_DIS_TX);
+
+	afe->mode = AMC7891_MODE_TX;
+}
+
+
+void switch_to_safe(AMC7891 *afe)
 {
 	afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_SAFE);
 	afe->write_dac(GRAV_DAC_VGSET, GRAV_DAC_VGSET_SAFE);
 	afe->write_dac(GRAV_DAC_TX_SW, GRAV_DAC_TX_SW_SAFE);
 	afe->write_dac(GRAV_TX_LNA_DIS, GRAV_DAC_TX_LNA_DIS_SAFE);
+
 	afe->enable_dacs();
+
+	afe->set_gpio(GRAV_AFE_SAFE);
+	afe->config_gpio(GRAV_AFE_ENABLES);
+
+	afe->mode = AMC7891_MODE_SAFE;
 }
 
-void switch_to_rx(AMC7891 *afe)
+enum GRAV_MODE
 {
-	// sequencing really matters here
+	GRAV_MODE_SAFE,
+	GRAV_MODE_TX_EN,
+	GRAV_MODE_TX_DIS
+};
 
-	afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_RX);
-	afe->write_dac(GRAV_DAC_VGSET, GRAV_DAC_VGSET_RX);
-	afe->write_dac(GRAV_DAC_TX_SW, GRAV_DAC_TX_SW_RX);
-	afe->write_dac(GRAV_TX_LNA_DIS, GRAV_DAC_TX_LNA_DIS_RX);
 
-	afe->set_gpio(GRAV_RECEIVE);
-}
+GRAV_MODE grav_mode = GRAV_MODE_SAFE;
 
-void switch_to_tx(AMC7891 *afe)
+
+void configure_grav_safe(AMC7891 *afe)
 {
-	// sequencing really matters here
-
-	afe->set_gpio(GRAV_RECEIVE);
-
-	afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_TX);
-	afe->write_dac(GRAV_DAC_VGSET, afe->gain);
-	afe->write_dac(GRAV_DAC_TX_SW, GRAV_DAC_TX_SW_TX);
-	afe->write_dac(GRAV_TX_LNA_DIS, GRAV_DAC_TX_LNA_DIS_TX);
+	afe->set_gpio(GRAV_MAIN_DEFAULTS);
+	afe->config_gpio(GRAV_MAIN_ENABLES);
+	afe->config_adc(0x20);
+	grav_mode = GRAV_MODE_SAFE;
 }
+
+
+void configure_grav_on_with_tx_off(AMC7891 *afe)
+{
+	if( GRAV_MODE_TX_DIS == grav_mode ) return; // TX already disabled
+
+	afe->set_gpio(GRAV_MAIN_POWER_ON_TX_OFF);
+
+	grav_mode = GRAV_MODE_TX_DIS;
+}
+
+
+void configure_grav_on_with_tx_on(AMC7891 *afe)
+{
+	if( GRAV_MODE_TX_EN == grav_mode ) return; // TX already enabled
+
+	afe->set_gpio(GRAV_MAIN_POWER_ON_TX_ON);
+
+	grav_mode = GRAV_MODE_TX_EN;
+}
+
 
 uint32_t get_mv(AMC7891 *afe, ADC_CHANNEL channel, GAIN gain)
 {
@@ -48,6 +106,7 @@ uint32_t get_mv(AMC7891 *afe, ADC_CHANNEL channel, GAIN gain)
 
 	return (in * 5 * 1000) / 1024 / gain;
 }
+
 
 int32_t conv_mv_v5v5n(uint32_t in_mv)
 {
