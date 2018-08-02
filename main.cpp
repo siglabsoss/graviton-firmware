@@ -1,5 +1,7 @@
 #include "mbed.h"
- 
+
+#include "BufferedSerial.h"
+
 #include "amc7891.h"
 #include "graviton.h"
 #include "lmk04826b.h"
@@ -8,8 +10,8 @@
 #include "dac3484.h"
 
 
-Serial pc(PA_2, NC);
-Serial fpga(PA_9, PA_10);
+RawSerial pc(PA_2, NC);
+BufferedSerial fpga(PA_9, PA_10, 8, 2);
 
 InterruptIn interrupt(PA_8);
 
@@ -30,7 +32,7 @@ DAC3484 dac3484(&spi_bus, PB_6, PB_7);
 int interrupt_detected = false;
 
 
-void dump_telemetry(Serial *out)
+void dump_telemetry(RawSerial *out)
 {
 	//out->printf("\033[0;0H");
 	out->printf("LOG: telemetry dump\r\n");
@@ -348,25 +350,30 @@ void handleInterruptHigh() {
  *      \
  *        ----- RX FLAG
  */
-void changeState(AMC7891 *afe, uint8_t state)
+void changeState(uint8_t msg)
 {
-	if( CS_RX == (CS_RX_FLAG_MASK & state) )
-		switch_to_rx(afe, 0x3F & state);
-	else
-	{
-		switch( CS_OP_CODE_MASK & state )
+	if( (CS_RX == (CS_RX_FLAG_MASK & msg)) && (CS_AFE_A == (CS_AFE_MASK & msg)) )
+		switch_to_rx(&afe_a, CS_OP_CODE_MASK & msg);
+	if( (CS_RX == (CS_RX_FLAG_MASK & msg)) && (CS_AFE_B == (CS_AFE_MASK & msg)) )
+		switch_to_rx(&afe_b, CS_OP_CODE_MASK & msg);
+	if( CS_RX != (CS_RX_FLAG_MASK & msg) )
+		switch( CS_OP_CODE_MASK & msg )
 		{
 		case CS_OP_CODE_0:
-			switch_to_safe(afe);
+			switch_to_safe(&afe_a);
+			switch_to_safe(&afe_b);
 			break;
 		case CS_OP_CODE_1:
-			dump_telemetry(&fpga);
+			//dump_telemetry(&fpga);
 			break;
 		case CS_OP_CODE_2:
 			dump_telemetry(&pc);
 			break;
 		case CS_OP_CODE_3:
-			switch_to_tx(afe);
+			if( CS_AFE_A == (CS_AFE_MASK & msg) )
+				switch_to_tx(&afe_a);
+			if( CS_AFE_B == (CS_AFE_MASK & msg) )
+				switch_to_tx(&afe_b);
 			break;
 		case CS_OP_CODE_4:
 		case CS_OP_CODE_5:
@@ -384,20 +391,18 @@ void changeState(AMC7891 *afe, uint8_t state)
 		case CS_OP_CODE_17:
 		case CS_OP_CODE_18:
 		case CS_OP_CODE_19:
-			dac3484.set_current(state - CS_OP_CODE_4);
+			dac3484.set_current((CS_OP_CODE_MASK & msg) - CS_OP_CODE_4);
 			break;
+		case CS_OP_CODE_63:
 		default:
 			break;
 		}
-	}
 }
+
 
 int main()
 {
-	uint8_t msg;
-	uint8_t ch_a_state = 0;
-	uint8_t ch_b_state = 0;
-	uint16_t check = 0;             // safety checklist item number
+	uint16_t check = 0;                   // safety checklist item number
 
 	// initialize entire board
 	init();
@@ -405,34 +410,19 @@ int main()
 	// handle interrupt event from Copper Suicide PCB
 	interrupt.rise(&handleInterruptHigh);
 
-	// flush FPGA buffer
-	while( fpga.readable() ) msg = fpga.getc();
-
 	while(1)
 	{
-		if( fpga.readable() )
-		{
-			msg = fpga.getc();
-
-			if( CS_AFE_A == (CS_AFE_MASK & msg) )
-				ch_a_state = 0x7F & msg;
-			else
-				ch_b_state = 0x7F & msg;
-		}
-
 		if( interrupt_detected )
 		{
-			changeState(&afe_a, ch_a_state);
-			changeState(&afe_b, ch_b_state);
+			// process commands first-in-first-out
+			while( fpga.readable() )
+				changeState(fpga.getc());
 
 			// if either one of the channels is set to transmit then enable DAC output
 			if( (AMC7891_MODE_TX == afe_a.mode) | (AMC7891_MODE_TX == afe_b.mode) )
 				configure_grav_on_with_tx_on(&afe_0);
 			else
 				configure_grav_on_with_tx_off(&afe_0);
-
-			ch_a_state = CS_OP_CODE_63; // NEXT TIME DO NOTHING
-			ch_b_state = CS_OP_CODE_63; // NEXT TIME DO NOTHING
 
 			interrupt_detected = false;
 		}

@@ -359,6 +359,8 @@ OBJECTS += ./src/lmk04826b.o
 OBJECTS += ./src/lmk04133.o
 OBJECTS += ./src/ads42lb69.o
 OBJECTS += ./src/dac3484.o
+OBJECTS += ./src/BufferedSerial.o
+OBJECTS += ./src/MyBuffer.o
 
 INCLUDE_PATHS += -I../
 INCLUDE_PATHS += -I../.

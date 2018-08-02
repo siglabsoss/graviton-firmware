@@ -55,31 +55,47 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
-  char message[3] = { 0 };
-  
+  uint8_t buf[2] = { 0 };
+  digitalWrite(INTERRUPT, LOW);
+  digitalWrite(LED_BUILTIN, LOW);
+  buf[0] = CS_AFE_A | CS_RX;
+  buf[1] = CS_AFE_B | CS_OP_CODE_3;
+  Serial1.write(buf, 2);
+//  Serial1.write(CS_AFE_B | CS_OP_CODE_3);
+  delay(50);
+
+  digitalWrite(LED_BUILTIN, HIGH);
   digitalWrite(INTERRUPT, HIGH);
-  delay(1000);
+
+  delay(50);
 
   digitalWrite(INTERRUPT, LOW);
-  message[0] = CS_OP_CODE_2;
-  Serial1.println(message);
-  delay(1000);
-  
+  digitalWrite(LED_BUILTIN, LOW);
+  buf[0] = CS_OP_CODE_0;
+  buf[1] = CS_OP_CODE_0;
+  Serial1.write(buf, 2);
+  delay(50);
+
+  digitalWrite(LED_BUILTIN, HIGH);
   digitalWrite(INTERRUPT, HIGH);
-  delay(1000);
 
-  digitalWrite(INTERRUPT, LOW);
-  message[0] = CS_AFE_B | CS_OP_CODE_3;
-  Serial1.println(message);
-  delay(1000);
-
-    digitalWrite(INTERRUPT, HIGH);
-  delay(1000);
-
-  digitalWrite(INTERRUPT, LOW);
-  message[0] = CS_AFE_B | CS_RX;
-  Serial1.println(message);
-  delay(1000);
+  delay(50);
+//  
+//  digitalWrite(INTERRUPT, HIGH);
+//  delay(1000);
+//
+//  digitalWrite(INTERRUPT, LOW);
+//  message[0] = CS_AFE_B | CS_OP_CODE_3;
+//  Serial1.println(message);
+//  delay(1000);
+//
+//    digitalWrite(INTERRUPT, HIGH);
+//  delay(1000);
+//
+//  digitalWrite(INTERRUPT, LOW);
+//  message[0] = CS_AFE_B | CS_RX;
+//  Serial1.println(message);
+//  delay(1000);
 
 }
 

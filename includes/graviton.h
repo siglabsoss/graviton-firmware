@@ -138,6 +138,12 @@ enum GAIN
 #define CS_OP_CODE_17             0x11
 #define CS_OP_CODE_18             0x12
 #define CS_OP_CODE_19             0x13
+#define CS_OP_CODE_20             0x14
+#define CS_OP_CODE_21             0x15
+#define CS_OP_CODE_22             0x16
+#define CS_OP_CODE_23             0x17
+#define CS_OP_CODE_24             0x18
+#define CS_OP_CODE_25             0x19
 #define CS_OP_CODE_63             0x3F
 
 
