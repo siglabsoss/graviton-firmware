@@ -13,7 +13,7 @@
 RawSerial pc(PA_2, NC);
 BufferedSerial fpga(PA_9, PA_10, 8, 2);
 
-InterruptIn interrupt(PA_8);
+DigitalIn interrupt(PA_8);
 
 DigitalOut buzzer(PA_0);
 DigitalOut osc_en(PA_11);
@@ -28,8 +28,6 @@ LMK04826B lmk04826b(&spi_bus, PA_4, PA_3);
 LMK04133 lmk04133(&spi_bus, PA_5, PA_7);
 ADS42LB69 ads42lb69(&spi_bus, PB_1, PA_6);
 DAC3484 dac3484(&spi_bus, PB_6, PB_7);
-
-int interrupt_detected = false;
 
 
 void dump_telemetry(RawSerial *out)
@@ -109,29 +107,29 @@ uint16_t safety_check(uint16_t test_item)
 	{
 	case 0:
 		value = V2V5;
-		if( (2400 > value) || (2600 < value) ) go_safe_and_reset("2.5V rail");
+		if( (2400 > value) || (2600 < value) ) go_safe_and_reset("2.5V rail out of spec");
 		break;
 	case 1:
 		value = V1V8;
-		if( (1700 > value) || (1900 < value) ) go_safe_and_reset("1.8V rail");
+		if( (1700 > value) || (1900 < value) ) go_safe_and_reset("1.8V rail out of spec");
 		break;
 	case 2:
 		value = V3V8;
-		if( (3550 > value) || (4000 < value) ) go_safe_and_reset("3.8V rail");
+		if( (3550 > value) || (4000 < value) ) go_safe_and_reset("3.8V rail out of spec");
 		break;
 	case 3:
 		value = V5V5;
-		if( (5250 > value) || (5750 < value) ) go_safe_and_reset("5.5V rail");
+		if( (5250 > value) || (5750 < value) ) go_safe_and_reset("5.5V rail out of spec");
 		break;
 	case 4:
 		value = V5V5N;
 		if( (-6100 /*telemetry is wrong so this value is wrong to compensagte*/ > value) ||
 			(-5350 < value) )
-		        go_safe_and_reset("negative 5.5V rail");
+		        go_safe_and_reset("negative 5.5V rail out of spec");
 		break;
 	case 5:
 		value = V29;
-		if( (28750 > value) || (29250 < value) ) go_safe_and_reset("29V rail");
+		if( (28750 > value) || (29250 < value) ) go_safe_and_reset("29V rail out of spec");
 		break;
 	case 6:
 		if( 50 < AFE_CH_A_TEMP ) go_safe_and_reset("AFE #A overheated");
@@ -142,6 +140,8 @@ uint16_t safety_check(uint16_t test_item)
 	case 8:
 		if( 50 < AFE_MAIN_TEMP ) go_safe_and_reset("Main AFE overheated");
 		break;
+
+
 	case 9:
 		if( 70 < ADC_LM20 ) go_safe_and_reset("ADC overheated");
 		break;
@@ -159,6 +159,29 @@ uint16_t safety_check(uint16_t test_item)
 		break;
 	case 14:
 		if( 70 < T_PRE_TX3_A ) go_safe_and_reset("TX preamp 3 #A overheated");
+		break;
+	case 15:
+		if( 33 < P_OUT_A ) go_safe_and_reset("PA #A return power > 2 Watts");
+		break;
+
+
+	case 16:
+		if( 70 < T_PRE_RX_B ) go_safe_and_reset("RX preamp #B overheated");
+		break;
+	case 17:
+		if( 70 < T_LDO_B ) go_safe_and_reset("LDO #B overheated");
+		break;
+	case 18:
+		if( 90 < T_PA_B ) go_safe_and_reset("PA #B overheated");
+		break;
+	case 19:
+		if( 70 < T_PRE_TX2_B ) go_safe_and_reset("TX preamp 2 #B overheated");
+		break;
+	case 20:
+		if( 70 < T_PRE_TX3_B ) go_safe_and_reset("TX preamp 3 #B overheated");
+		break;
+	case 21:
+		if( 33 < P_OUT_B ) go_safe_and_reset("PA #B return power > 2 Watts");
 		break;
 	default:
 		return 0;
@@ -194,8 +217,8 @@ void calibrate_power_amplifier(AMC7891 *afe)
 	counts = conv_mv_to_dac_counts_for_vgg_circuit( -3800 /*mV*/ );
 	afe->write_dac(GRAV_DAC_VGSET, counts);
 
-	// Enable those scary Power Amplfiers
-	afe->write_dac(GRAV_DAC_PA_EN, 0x3FF);
+	// Enable that scary Power Amplfier
+	afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_TX);
 
 	// Bring it down until shoot-thru current is 100mA
 
@@ -216,17 +239,24 @@ void calibrate_power_amplifier(AMC7891 *afe)
 	}
 	counts += 2;
 	afe->write_dac(GRAV_DAC_VGSET, counts);
+
+	// Disable Power Amplfier
+	afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_RX);
+
 	pc.printf("\r\nLOG: Done with power amplifier(Vgg = %imV, I = %imA)\r\n",
 			conv_dac_counts_to_mv_for_vgg_circuit(counts),
 			conv_mv_i_pa(get_mv(afe, GRAV_ADC_I_PA, GAIN_1X)));
 
 	afe->vg_setpoint = counts;
+	afe->vg_quiescent = conv_mv_to_dac_counts_for_vgg_circuit(conv_dac_counts_to_mv_for_vgg_circuit(counts) - 100 /*mV*/ );
 }
 
 
 void init()
 {
 	uint8_t ret;
+
+	set_time(0);
 
 	buzzer = 0;       // buzzer doesn't actually work
 	osc_en = 0;       // not yet ready to setup oscillator
@@ -236,7 +266,10 @@ void init()
 	// Set serial port baud
 	pc.baud(115200);
 
-	pc.printf("\033[2J\033[1;1H");
+	//pc.printf("\033[2J\033[1;1H");
+	pc.printf("\r\n\r\n\r\nGRAVITON HARDWARE VERSION 3.0\r\n");
+	pc.printf("FIRMWARE VERSION 0.1\r\n");
+	pc.printf("SIGNAL LABORATORIES, INC.\r\n");
 
 	pc.printf("LOG: attempting to change to external oscillator\r\n");
 
@@ -324,11 +357,6 @@ void init()
 }
 
 
-void handleInterruptHigh() {
-	interrupt_detected = true;
-}
-
-
 /*
  * Change channel state
  *
@@ -393,6 +421,10 @@ void changeState(uint8_t msg)
 		case CS_OP_CODE_19:
 			dac3484.set_current((CS_OP_CODE_MASK & msg) - CS_OP_CODE_4);
 			break;
+		case CS_OP_CODE_20:
+			pc.printf("\033[0;0H");
+			pc.printf("P_IN_A        = %i    \r\n", P_IN_A);
+			pc.printf("P_OUT_A       = %i    \r\n", P_OUT_A);
 		case CS_OP_CODE_63:
 		default:
 			break;
@@ -407,13 +439,18 @@ int main()
 	// initialize entire board
 	init();
 
-	// handle interrupt event from Copper Suicide PCB
-	interrupt.rise(&handleInterruptHigh);
-
 	while(1)
 	{
-		if( interrupt_detected )
+		if( interrupt )
 		{
+			/*
+			 * it takes up to 200us to guarantee entry into this block so
+			 * make sure user pulses interrupt pin for 200us. Note that
+			 * no new safety checks are called when interrupt is high
+			 * so dont pulse it for more than 200us.
+			 */
+			while( interrupt ) { }
+
 			// process commands first-in-first-out
 			while( fpga.readable() )
 				changeState(fpga.getc());
@@ -423,8 +460,6 @@ int main()
 				configure_grav_on_with_tx_on(&afe_0);
 			else
 				configure_grav_on_with_tx_off(&afe_0);
-
-			interrupt_detected = false;
 		}
 
 		check = safety_check(check);

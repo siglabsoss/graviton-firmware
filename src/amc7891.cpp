@@ -49,7 +49,8 @@ void AMC7891::init()
 	write_reg(AMC_ADC_GAIN, 0x0000);
 
 	// Trigger the ADC
-	write_reg(AMC_AMC_CONFIG, 0x1300);
+//	write_reg(AMC_AMC_CONFIG, 0x1300);
+	write_reg(AMC_AMC_CONFIG, 0x3300);
 }
 
 
@@ -74,8 +75,8 @@ void AMC7891::config_adc(uint8_t val)
 
 uint16_t AMC7891::read_adc(ADC_CHANNEL channel)
 {
-	write_reg(AMC_AMC_CONFIG, 0x1300);
-	wait_us(1000);
+	//write_reg(AMC_AMC_CONFIG, 0x1300);
+	//wait_us(16);
 	return read_reg(AMC_ADC0_DATA + (0x0F & (int)channel));
 }
 

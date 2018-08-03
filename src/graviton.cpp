@@ -10,19 +10,23 @@
 
 void switch_to_rx(AMC7891 *afe, uint8_t gain)
 {
+	if( AMC7891_MODE_SAFE == afe->mode )
+	{
+		afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_TX);
+	}
 	// sequencing really matters here
 
 	// If we're not already receiving then set DAC
 	if( AMC7891_MODE_RX != afe->mode )
 	{
-		afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_RX);
-		afe->write_dac(GRAV_DAC_VGSET, GRAV_DAC_VGSET_RX);
+		//afe->write_dac(GRAV_DAC_VGSET, GRAV_DAC_VGSET_RX);
+		afe->write_dac(GRAV_DAC_VGSET, afe->vg_quiescent);
 		afe->write_dac(GRAV_DAC_TX_SW, GRAV_DAC_TX_SW_RX);
 		afe->write_dac(GRAV_TX_LNA_DIS, GRAV_DAC_TX_LNA_DIS_RX);
 	}
 
 	// Set the MSB of DSA[6:0] with 6-bit gain[5:0]
-	afe->set_gpio(GRAV_RECEIVE | ((gain<<1)&0x7E));
+	afe->set_gpio(GRAV_AFE_RECEIVE | ((gain<<1)&0x7E));
 
 	afe->mode = AMC7891_MODE_RX;
 }
@@ -31,11 +35,15 @@ void switch_to_tx(AMC7891 *afe)
 {
 	if( AMC7891_MODE_TX == afe->mode ) return; // already transmitting
 
+	if( AMC7891_MODE_SAFE == afe->mode )
+	{
+		afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_TX);
+	}
+
 	// sequencing really matters here
 
-	afe->set_gpio(GRAV_TRANSMIT);
+	afe->set_gpio(GRAV_AFE_TRANSMIT);
 
-	afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_TX);
 	afe->write_dac(GRAV_DAC_VGSET, afe->vg_setpoint);
 	afe->write_dac(GRAV_DAC_TX_SW, GRAV_DAC_TX_SW_TX);
 	afe->write_dac(GRAV_TX_LNA_DIS, GRAV_DAC_TX_LNA_DIS_TX);

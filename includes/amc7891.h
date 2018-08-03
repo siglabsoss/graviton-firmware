@@ -95,6 +95,7 @@ public:
 
 public:
 	uint32_t vg_setpoint;
+	uint32_t vg_quiescent;
 	AMC7891_MODE mode;
 };
 
