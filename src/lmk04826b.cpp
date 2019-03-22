@@ -8,6 +8,7 @@
 #include "lmk04826b.h"
 #include "stdint.h"
 
+
 uint8_t lmk04826b_rom[] =
 {
 		0x00,0x00,0x80,
@@ -76,10 +77,11 @@ uint8_t lmk04826b_rom[] =
 		0x01,0x43,0x11, // enable sync and set sync mode to 1
 		0x01,0x43,0x31, // sync_pol = 1
 		0x01,0x43,0x11, // sync_pol = 0 causing sync
+		//0x01,0x43,0x90,
 		0x01,0x44,0x00,
 		0x01,0x45,0x7F,
-		0x01,0x46,0x1B,
-		0x01,0x47,0x3A,
+		0x01,0x46,0x1B, //0x1B,
+		0x01,0x47,0x0A, //changed from 0x3A to 0x2A - select Clkin1 instead of clkin0
 		0x01,0x48,0x02,
 		0x01,0x49,0x42,
 		0x01,0x4A,0x02,
@@ -150,13 +152,13 @@ void LMK04826B::init()
 
 	for( i = 0; i < sizeof(lmk04826b_rom) / 3; i++)
 	{
-		wait_us(1);
+		wait_us(10);
 
 		cs->write(0);
 
 		spi->write((const char*)(lmk04826b_rom + 3 * i), 3, 0, 0);
 
-		wait_us(1);
+		wait_us(10);
 
 		cs->write(1);
 	}
@@ -164,6 +166,33 @@ void LMK04826B::init()
 	spi->format(8,1);
 }
 
-
+//void LMK04826B::powerdown()
+//{
+//	unsigned i;
+//	uint8_t lmk04826b_pd[]=
+//	{
+//			0x01,0x2F,0x01
+//			//0x00,0x00,0x01
+//	};
+//
+//	spi->format(8,0);
+//
+//	wait_ms(1);
+//
+//	rst->write(0);
+//
+//	wait_ms(1);
+//
+//	for( i = 0; i < sizeof(lmk04826b_pd) /3; i++) {
+//		wait_us(1);
+//		cs->write(0);
+//		spi->write((const char*)(lmk04826b_rom + 3 * i), 3, 0, 0);
+//		wait_us(1);
+//		cs->write(1);
+//	}
+//	spi->format(8,1);
+//
+//}
+//
 
 

@@ -30,8 +30,8 @@
 #define TRIGGER 3
 
 /*
- * Messages from Copper Suicide
- */
+   Messages from Copper Suicide
+*/
 
 #define CS_AFE_MASK               0x80
 #define CS_RX_FLAG_MASK           0x40
@@ -73,9 +73,9 @@ uint8_t state = 0;
 
 void timedBlinkIsr()   // callback function when interrupt is asserted
 {
-    uint8_t buf[3] = { 0 };
-  
-  switch(state)
+  uint8_t buf[3] = { 0 };
+
+  switch (state)
   {
     case 0:
       digitalWrite(INTERRUPT, HIGH);
@@ -110,9 +110,9 @@ void timedBlinkIsr()   // callback function when interrupt is asserted
 // the setup function runs once when you press reset or power the board
 void setup() {
   uint8_t buf[1];
-  
+
   // initialize digital pin LED_BUILTIN as an output.
-  pinMode(LED_BUILTIN, OUTPUT); 
+  pinMode(LED_BUILTIN, OUTPUT);
   pinMode(INTERRUPT, OUTPUT);
   pinMode(TRIGGER, OUTPUT);
   digitalWrite(INTERRUPT, LOW);
@@ -129,11 +129,9 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
+  uint8_t buf[1];
+  buf[0] = CS_OP_CODE_0;
+  Serial1.write(buf, 1);
+  delay(10000);
 
-delay(10000);
-  
 }
-
-
-
-

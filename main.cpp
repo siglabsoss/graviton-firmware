@@ -107,38 +107,38 @@ uint16_t safety_check(uint16_t test_item)
 	{
 	case 0:
 		value = V2V5;
-		if( (2400 > value) || (2600 < value) ) go_safe_and_reset("2.5V rail out of spec");
+/*		if( (2400 > value) || (2600 < value) ) go_safe_and_reset("2.5V rail out of spec");*/
 		break;
 	case 1:
 		value = V1V8;
-		if( (1700 > value) || (1900 < value) ) go_safe_and_reset("1.8V rail out of spec");
+//		if( (1700 > value) || (1900 < value) ) go_safe_and_reset("1.8V rail out of spec");
 		break;
 	case 2:
 		value = V3V8;
-		if( (3550 > value) || (4000 < value) ) go_safe_and_reset("3.8V rail out of spec");
+//		if( (3550 > value) || (4000 < value) ) go_safe_and_reset("3.8V rail out of spec");
 		break;
 	case 3:
 		value = V5V5;
-		if( (5250 > value) || (5750 < value) ) go_safe_and_reset("5.5V rail out of spec");
+//		if( (1 > value) || (5750 < value) ) go_safe_and_reset("5.5V rail out of spec");
 		break;
 	case 4:
 		value = V5V5N;
-		if( (-6100 /*telemetry is wrong so this value is wrong to compensagte*/ > value) ||
-			(-5350 < value) )
-		        go_safe_and_reset("negative 5.5V rail out of spec");
+//		if( (-6100 /*telemetry is wrong so this value is wrong to compensagte*/ > value) ||
+//			(-5350 < value) )
+//		        go_safe_and_reset("negative 5.5V rail out of spec");
 		break;
 	case 5:
 		value = V29;
-		if( (28750 > value) || (29250 < value) ) go_safe_and_reset("29V rail out of spec");
+//		if( (28750 > value) || (29250 < value) ) go_safe_and_reset("29V rail out of spec");
 		break;
 	case 6:
-		if( 50 < AFE_CH_A_TEMP ) go_safe_and_reset("AFE #A overheated");
+		if( 60 < AFE_CH_A_TEMP ) go_safe_and_reset("AFE #A overheated");
 		break;
 	case 7:
-		if( 50 < AFE_CH_B_TEMP ) go_safe_and_reset("AFE #B overheated");
+		if( 60 < AFE_CH_B_TEMP ) go_safe_and_reset("AFE #B overheated");
 		break;
 	case 8:
-		if( 50 < AFE_MAIN_TEMP ) go_safe_and_reset("Main AFE overheated");
+		if( 60 < AFE_MAIN_TEMP ) go_safe_and_reset("Main AFE overheated");
 		break;
 
 
@@ -161,7 +161,7 @@ uint16_t safety_check(uint16_t test_item)
 		if( 70 < T_PRE_TX3_A ) go_safe_and_reset("TX preamp 3 #A overheated");
 		break;
 	case 15:
-		if( 33 < P_OUT_A ) go_safe_and_reset("PA #A return power > 2 Watts");
+//		if( 33 < P_IN_A ) go_safe_and_reset("PA #A return power > 2 Watts");
 		break;
 
 
@@ -181,7 +181,7 @@ uint16_t safety_check(uint16_t test_item)
 		if( 70 < T_PRE_TX3_B ) go_safe_and_reset("TX preamp 3 #B overheated");
 		break;
 	case 21:
-		if( 33 < P_OUT_B ) go_safe_and_reset("PA #B return power > 2 Watts");
+//		if( 33 < P_IN_B ) go_safe_and_reset("PA #B return power > 2 Watts");
 		break;
 	default:
 		return 0;
@@ -313,11 +313,13 @@ void init()
 	wait_ms(500);
 
 	// If I/O busses are unpowered then power them
-	if( (V2V5 < 100) && (V1V8 < 100) )
+	if( (V2V5 < 100) && (V1V8 < 100) ) {
+		pc.printf("V2V5: %d V1V8: %d\r\n", V2V5, V1V8);
 		configure_grav_on_with_tx_off(&afe_0);
-	else {
+	} else {
+		pc.printf("V2V5: %d V1V8: %d\r\n", V2V5, V1V8);
 		pc.printf("ERROR: BUS IS POWERED. HALTING\r\n");
-		while(1) { }
+		//while(1) { }
 	}
 
 	// Wait for power supplies to stabilize
@@ -439,8 +441,25 @@ int main()
 	// initialize entire board
 	init();
 
+	int slow = 1;
+
+	int mode_switched = 0;
+
 	while(1)
 	{
+		if(slow % 100000 == 0 ) {
+			pc.printf("x\n");
+			slow = 0;
+			if(!mode_switched) {
+				pc.printf("switched to tx a\n");
+				mode_switched = 1;
+				//changeState(CS_OP_CODE_3 | CS_AFE_A);
+				//changeState(CS_OP_CODE_7);
+			}
+			changeState(CS_OP_CODE_2);
+		}
+		slow++;
+
 		if( interrupt )
 		{
 			/*

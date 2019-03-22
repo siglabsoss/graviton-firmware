@@ -20,6 +20,7 @@ public:
 	LMK04826B(SPI *bus, PinName select, PinName rst_pin);
 
 	void init();
+	void powerdown();
 };
 
 
