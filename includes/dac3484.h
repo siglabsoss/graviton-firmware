@@ -19,10 +19,11 @@ class DAC3484
 public:
 	DAC3484(SPI *bus, PinName select, PinName rst_pin);
 
-	void init();
+	void init(RawSerial* serial);
 
 	void set_current(uint8_t val);
 	int8_t get_temp();
+	int8_t data_pattern_checker();
 };
 
 

@@ -327,7 +327,7 @@ void init()
 
 	pc.printf("LOG: checking everything...\r\n");
 
-	safety_check();
+	//safety_check();
 
 	dump_telemetry(&pc);
 
@@ -335,19 +335,19 @@ void init()
 	lmk04826b.init();
 	lmk04133.init();
 	ads42lb69.init();
-	dac3484.init();
+	dac3484.init(&pc);
 
 	// once ADC, DAC, CLOCK, and SYNTH programmed then increase SPI bus speed
-	spi_bus.frequency(18000000);
+	spi_bus.frequency(500000);
 
 	// calibrating power amplifiers
 
-	safety_check();
+	//safety_check();
 
 	calibrate_power_amplifier(&afe_a);
 	calibrate_power_amplifier(&afe_b);
 
-	safety_check();
+	//safety_check();
 
 	// Configure RF AFE
 	switch_to_safe(&afe_a);
@@ -448,26 +448,29 @@ int main()
 	while(1)
 	{
 		if(slow % 100000 == 0 ) {
-			pc.printf("x\n");
+//			pc.printf("x\n");
 			slow = 0;
 			if(!mode_switched) {
 				pc.printf("switched to tx a\n");
 				mode_switched = 1;
-				//changeState(CS_OP_CODE_3 | CS_AFE_A);
-				//changeState(CS_OP_CODE_7);
+				changeState(CS_OP_CODE_3 | CS_AFE_A);
+//				changeState(CS_OP_CODE_19 | 0x400);
+//				changeState(CS_OP_CODE_7); // dac current
+				changeState(CS_OP_CODE_18); // dac current
+				configure_grav_on_with_tx_on(&afe_0);
 			}
 			changeState(CS_OP_CODE_2);
 		}
 		slow++;
 
-		if( interrupt )
+		/*if( interrupt )
 		{
-			/*
-			 * it takes up to 200us to guarantee entry into this block so
-			 * make sure user pulses interrupt pin for 200us. Note that
-			 * no new safety checks are called when interrupt is high
-			 * so dont pulse it for more than 200us.
-			 */
+			//
+			// it takes up to 200us to guarantee entry into this block so
+			// make sure user pulses interrupt pin for 200us. Note that
+			// no new safety checks are called when interrupt is high
+			// so dont pulse it for more than 200us.
+			//
 			while( interrupt ) { }
 
 			// process commands first-in-first-out
@@ -479,9 +482,9 @@ int main()
 				configure_grav_on_with_tx_on(&afe_0);
 			else
 				configure_grav_on_with_tx_off(&afe_0);
-		}
+		}*/
 
-		check = safety_check(check);
+		//check = safety_check(check);
 	}
 }
 
