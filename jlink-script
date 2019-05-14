@@ -1,0 +1,5 @@
+r
+h
+loadbin ./BUILD/yes.bin 0
+r
+q
