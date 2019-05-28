@@ -445,23 +445,34 @@ int main()
 
 	int mode_switched = 0;
 
+	int dac_current = 0;
+
 	while(1)
 	{
 		if(slow % 100000 == 0 ) {
 //			pc.printf("x\n");
-			slow = 0;
+			//slow = 0;
 			if(!mode_switched) {
 				pc.printf("switched to tx a\n");
 				mode_switched = 1;
 				changeState(CS_OP_CODE_3 | CS_AFE_A);
 //				changeState(CS_OP_CODE_19 | 0x400);
 //				changeState(CS_OP_CODE_7); // dac current
-				changeState(CS_OP_CODE_18); // dac current
+				//changeState(CS_OP_CODE_18); // dac current
 				configure_grav_on_with_tx_on(&afe_0);
 			}
 			changeState(CS_OP_CODE_2);
 		}
 		slow++;
+
+		/*if(slow % 5000000 == 0 && mode_switched) {
+			changeState(CS_OP_CODE_4 + dac_current);
+			pc.printf("DAC_CURRENT: %d\n", dac_current);
+			dac_current++;
+			if(dac_current == 15) {
+				dac_current = 0;
+			}
+		}*/
 
 		/*if( interrupt )
 		{
