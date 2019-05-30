@@ -436,6 +436,11 @@ void changeState(uint8_t msg)
 
 int main()
 {
+	int initial_wait=0;
+	while(initial_wait != 5000000) {
+		initial_wait++;
+	}
+
 	uint16_t check = 0;                   // safety checklist item number
 
 	// initialize entire board
