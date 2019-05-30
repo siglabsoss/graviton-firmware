@@ -15,7 +15,7 @@ uint8_t _dac3484_rom[] = {
 		0x20,0x11,0x00,
 		0x24,0x1c,0x00,
 		0x1b,0x08,0x00,
-		0x03,0x10,0x01 }; // [15:12] COARSE_DAC, [0] SIF_TXENABLE (0 = use external TXENABLE pin, 1 = enable DAC output)
+		0x03,0x40,0x01 }; // [15:12] COARSE_DAC, [0] SIF_TXENABLE (0 = use external TXENABLE pin, 1 = enable DAC output)
 
 #define DAC3484_NUM_REGS 8
 
