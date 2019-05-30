@@ -459,7 +459,7 @@ int main()
 				//changeState(CS_OP_CODE_18); // dac current
 				//configure_grav_on_with_tx_on(&afe_0);
 				//switch_to_rx(&afe_b);
-			changeState(CS_RX | CS_AFE_B | 0x8); //set CH B to rx and dsa to 2
+			changeState(CS_RX | CS_AFE_B | 0xf); //set CH B to rx and dsa to 2
 			}
 			changeState(CS_OP_CODE_2);
 		}
