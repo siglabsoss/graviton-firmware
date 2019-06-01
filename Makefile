@@ -688,7 +688,7 @@ endif
 # Dependencies
 ###############################################################################
 
-.PHONY: program
+.PHONY: program stprogram
 # Program via JLink
 program:
 	JLinkExe -if swd -device STM32F303K8 -speed 4000 -CommanderScript ./jlink-script
