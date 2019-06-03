@@ -12,6 +12,7 @@ uint8_t ads42lb69_rom[] =
 {
 		0x06,0x80, // reg6  - clock divider bypass
 		0x08,0x08, // reg8  - disable CTRLx pins
+		//0x14,0xC0, // reg15 - double output strength with 50ohm termination
 		0x15,0x01, // reg15 - DDR LVDS output mode
 		0x20,0x01, // reg20 - CTRL1 and CTRL2 function as overrange indicators for channels A & B respectively
 		0x0F,0x00  // reg0f - CHA & CHB test patterns (see data sheet)

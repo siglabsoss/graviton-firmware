@@ -9,8 +9,9 @@
 
 uint8_t _dac3484_rom[] = {
 		0x00,0x01,0x9d,
+		0x01,0x0C,0x00, // default 0x050E  --- even parity and word parity enabled
 		0x02,0x80,0x82,
-		0x07,0xff,0xff,
+		0x07,0xff,0xE7, // disable mask on bit 4 and 3 (rising parity, falling parity)
 		0x1f,0x44,0x44,
 		0x20,0x11,0x00,
 		0x24,0x1c,0x00,
@@ -82,6 +83,30 @@ int8_t DAC3484::get_temp()
 //	spi->frequency(18000000);
 
 	return (int8_t)val[1];
+}
+
+uint16_t DAC3484::read_alarms() {
+	uint8_t config5[3] = {0x85, 0x00, 0x00};
+	uint8_t val[3];
+
+	spi->format(8,0);
+	spi->frequency(500000);
+
+	wait_us(1);
+
+	cs->write(0);
+
+	wait_us(1);
+
+	spi->write((const char*) config5, 3, (char*) val, 3);
+
+	wait_us(1);
+
+	cs->write(1);
+	
+	spi->format(8,1);
+
+	return (uint16_t)((val[1] << 8) | val[2]);
 }
 
 /*int8_t DAC3484::data_pattern_checker()
