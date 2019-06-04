@@ -25,6 +25,7 @@ public:
 	int8_t get_temp();
 	uint16_t read_alarms();
 	int8_t data_pattern_checker();
+    void clear_alarms();
 };
 
 

@@ -29,7 +29,6 @@ LMK04133 lmk04133(&spi_bus, PA_5, PA_7);
 ADS42LB69 ads42lb69(&spi_bus, PB_1, PA_6);
 DAC3484 dac3484(&spi_bus, PB_6, PB_7);
 
-
 void dump_telemetry(RawSerial *out)
 {
 	//out->printf("\033[0;0H");
@@ -60,7 +59,9 @@ void dump_telemetry(RawSerial *out)
 	out->printf("T_PA_B        = %i\r\n", T_PA_B);
 	out->printf("T_PRE_TX2_B   = %i\r\n", T_PRE_TX2_B);
 	out->printf("T_PRE_TX3_B   = %i\r\n", T_PRE_TX3_B);
-	out->printf("DAC_TEMPDATA  = %i\r\n", dac3484.get_temp());
+    out->printf("DAC_TEMPDATA  = %i\r\n", dac3484.get_temp());
+    dac3484.clear_alarms();
+    out->printf("E_DAC_ALARM   = %x\r\n", ((E_DAC)) );
 }
 
 

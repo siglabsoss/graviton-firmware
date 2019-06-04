@@ -201,5 +201,7 @@ void configure_grav_on_with_tx_on(AMC7891 *afe);
 #define T_PRE_TX2_B   lm20_conv_mv_degc(get_mv(&afe_b, GRAV_ADC_T_PRE_TX2, GAIN_1X))
 #define T_PRE_TX3_B   lm20_conv_mv_degc(get_mv(&afe_b, GRAV_ADC_T_PRE_TX3, GAIN_1X))
 
+#define E_DAC         dac3484.read_alarms()
+
 
 #endif /* INCLUDES_GRAVITON_H_ */

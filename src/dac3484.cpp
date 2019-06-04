@@ -9,16 +9,17 @@
 
 uint8_t _dac3484_rom[] = {
 		0x00,0x01,0x9d,
-		0x01,0x0C,0x00, // default 0x050E  --- even parity and word parity enabled
+		0x01,0x04,0x00, // default 0x050E  --- even parity and word parity enabled
 		0x02,0x80,0x82,
-		0x07,0xff,0xE7, // disable mask on bit 4 and 3 (rising parity, falling parity)
+		0x07,0x00,0x00, // E7  disable mask on bit 4 and 3 (rising parity, falling parity)
 		0x1f,0x44,0x44,
 		0x20,0x11,0x00,
 		0x24,0x1c,0x00,
 		0x1b,0x08,0x00,
-		0x03,0x40,0x01 }; // [15:12] COARSE_DAC, [0] SIF_TXENABLE (0 = use external TXENABLE pin, 1 = enable DAC output)
+		0x03,0x40,0x01,  // [15:12] COARSE_DAC, [0] SIF_TXENABLE (0 = use external TXENABLE pin, 1 = enable DAC output)
+        0x05,0x00,0x00}; // clear flags 
 
-#define DAC3484_NUM_REGS 8
+#define DAC3484_NUM_REGS 10
 
 
 DAC3484::DAC3484(SPI *bus, PinName select, PinName rst_pin)
@@ -107,6 +108,30 @@ uint16_t DAC3484::read_alarms() {
 	spi->format(8,1);
 
 	return (uint16_t)((val[1] << 8) | val[2]);
+}
+
+void DAC3484::clear_alarms() {
+
+    // write zeros to bits you wish to clear
+    uint8_t config5[3] = {0x05, 0x00, 0x00};
+
+    spi->format(8,0);
+    spi->frequency(500000);
+
+    wait_us(2);
+
+    cs->write(0);
+
+    wait_us(2);
+
+    spi->write((const char*)(config5), 3, 0, 0);
+
+    wait_us(2);
+
+    cs->write(1);
+
+    spi->format(8,1);
+//  spi->frequency(18000000);
 }
 
 /*int8_t DAC3484::data_pattern_checker()
