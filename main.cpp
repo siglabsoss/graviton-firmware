@@ -60,8 +60,8 @@ void dump_telemetry(RawSerial *out)
 	out->printf("T_PRE_TX2_B   = %i\r\n", T_PRE_TX2_B);
 	out->printf("T_PRE_TX3_B   = %i\r\n", T_PRE_TX3_B);
     out->printf("DAC_TEMPDATA  = %i\r\n", dac3484.get_temp());
+    out->printf("E_DAC_ALARM   = %x\r\n", ((E_DAC)&(~0x0040)) );
     dac3484.clear_alarms();
-    out->printf("E_DAC_ALARM   = %x\r\n", ((E_DAC)) );
 }
 
 
