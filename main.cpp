@@ -480,7 +480,7 @@ int main()
 			}
 		}*/
 
-		/*if( interrupt )
+		if( interrupt )
 		{
 			//
 			// it takes up to 200us to guarantee entry into this block so
@@ -491,15 +491,16 @@ int main()
 			while( interrupt ) { }
 
 			// process commands first-in-first-out
-			while( fpga.readable() )
-				changeState(fpga.getc());
-
+			while( fpga.readable() ) {
+			    pc.printf(fpga.getc());
+			    //changeState(fpga.getc());
+			}
 			// if either one of the channels is set to transmit then enable DAC output
 			if( (AMC7891_MODE_TX == afe_a.mode) | (AMC7891_MODE_TX == afe_b.mode) )
 				configure_grav_on_with_tx_on(&afe_0);
 			else
 				configure_grav_on_with_tx_off(&afe_0);
-		}*/
+		}
 
 		//check = safety_check(check);
 	}
