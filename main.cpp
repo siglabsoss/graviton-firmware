@@ -10,8 +10,12 @@
 #include "dac3484.h"
 
 
+// order is  tx,   rx
 RawSerial pc(PA_2, NC);
-BufferedSerial fpga(PA_9, PA_10, 8, 2);
+
+// 9 is tx
+// 10 is rx
+RawSerial fpga(PA_9, PA_10); // works
 
 DigitalIn interrupt(PA_8);
 
@@ -455,20 +459,21 @@ int main()
 
 	while(1)
 	{
-		if(slow % 100000 == 0 ) {
+		if(slow % 1000000 == 0 ) {
 //			pc.printf("x\n");
 			//slow = 0;
 			if(!mode_switched) {
 				pc.printf("switched to tx a\n");
 				mode_switched = 1;
-				changeState(CS_OP_CODE_3 | CS_AFE_A);
+				// changeState(CS_OP_CODE_3 | CS_AFE_A);
 //				changeState(CS_OP_CODE_19 | 0x400);
 //				changeState(CS_OP_CODE_7); // dac current
 				//changeState(CS_OP_CODE_18); // dac current
-				configure_grav_on_with_tx_on(&afe_0);
+				// configure_grav_on_with_tx_on(&afe_0);
 			}
 			changeState(CS_OP_CODE_2);
-		}
+            fpga.printf("hello\r\n");
+        }
 		slow++;
 
 		/*if(slow % 5000000 == 0 && mode_switched) {
@@ -480,7 +485,7 @@ int main()
 			}
 		}*/
 
-		if( interrupt )
+		if( true || interrupt )
 		{
 			//
 			// it takes up to 200us to guarantee entry into this block so
@@ -488,18 +493,20 @@ int main()
 			// no new safety checks are called when interrupt is high
 			// so dont pulse it for more than 200us.
 			//
-			while( interrupt ) { }
+
+            // pc.printf("before\r\n");
+
+			// while( interrupt ) { }
 
 			// process commands first-in-first-out
-			while( fpga.readable() ) {
-			    pc.printf(fpga.getc());
-			    //changeState(fpga.getc());
+            while( fpga.readable() ) {
+                pc.printf("char: %d\r\n", (int)fpga.getc());
 			}
 			// if either one of the channels is set to transmit then enable DAC output
-			if( (AMC7891_MODE_TX == afe_a.mode) | (AMC7891_MODE_TX == afe_b.mode) )
-				configure_grav_on_with_tx_on(&afe_0);
-			else
-				configure_grav_on_with_tx_off(&afe_0);
+			// if( (AMC7891_MODE_TX == afe_a.mode) | (AMC7891_MODE_TX == afe_b.mode) )
+			// 	configure_grav_on_with_tx_on(&afe_0);
+			// else
+			// 	configure_grav_on_with_tx_off(&afe_0);
 		}
 
 		//check = safety_check(check);
