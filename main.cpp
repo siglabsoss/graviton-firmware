@@ -35,34 +35,34 @@ DAC3484 dac3484(&spi_bus, PB_6, PB_7);
 
 void dump_telemetry(RawSerial *out)
 {
-	//out->printf("\033[0;0H");
-	out->printf("LOG: telemetry dump\r\n");
-	out->printf("V2V5          = %i\r\n", V2V5);
-	out->printf("V1V8          = %i\r\n", V1V8);
-	out->printf("V3V8          = %i\r\n", V3V8);
-	out->printf("V5V5          = %i\r\n", V5V5);
-	out->printf("V5V5N         = %i\r\n", V5V5N);
-	out->printf("V29           = %i\r\n", V29);
-	out->printf("ADC_TEMP      = %i\r\n", ADC_LM20);
-	out->printf("AFE_CH_A_TEMP = %i\r\n", AFE_CH_A_TEMP);
-	out->printf("AFE_CH_B_TEMP = %i\r\n", AFE_CH_B_TEMP);
-	out->printf("AFE_MAIN_TEMP = %i\r\n", AFE_MAIN_TEMP);
-	out->printf("P_OUT_A       = %i\r\n", P_OUT_A);
-	out->printf("I_PA_A        = %i\r\n", I_PA_A);
-	out->printf("T_PRE_RX_A    = %i\r\n", T_PRE_RX_A);
-	out->printf("T_LDO_A       = %i\r\n", T_LDO_A);
-	out->printf("P_IN_A        = %i\r\n", P_IN_A);
-	out->printf("T_PA_A        = %i\r\n", T_PA_A);
-	out->printf("T_PRE_TX2_A   = %i\r\n", T_PRE_TX2_A);
-	out->printf("T_PRE_TX3_A   = %i\r\n", T_PRE_TX3_A);
-	out->printf("P_OUT_B       = %i\r\n", P_OUT_B);
-	out->printf("I_PA_B        = %i\r\n", I_PA_B);
-	out->printf("T_PRE_RX_B    = %i\r\n", T_PRE_RX_B);
-	out->printf("T_LDO_B       = %i\r\n", T_LDO_B);
-	out->printf("P_IN_B        = %i\r\n", P_IN_B);
-	out->printf("T_PA_B        = %i\r\n", T_PA_B);
-	out->printf("T_PRE_TX2_B   = %i\r\n", T_PRE_TX2_B);
-	out->printf("T_PRE_TX3_B   = %i\r\n", T_PRE_TX3_B);
+    //out->printf("\033[0;0H");
+    out->printf("LOG: telemetry dump\r\n");
+    out->printf("V2V5          = %i\r\n", V2V5);
+    out->printf("V1V8          = %i\r\n", V1V8);
+    out->printf("V3V8          = %i\r\n", V3V8);
+    out->printf("V5V5          = %i\r\n", V5V5);
+    out->printf("V5V5N         = %i\r\n", V5V5N);
+    out->printf("V29           = %i\r\n", V29);
+    out->printf("ADC_TEMP      = %i\r\n", ADC_LM20);
+    out->printf("AFE_CH_A_TEMP = %i\r\n", AFE_CH_A_TEMP);
+    out->printf("AFE_CH_B_TEMP = %i\r\n", AFE_CH_B_TEMP);
+    out->printf("AFE_MAIN_TEMP = %i\r\n", AFE_MAIN_TEMP);
+    out->printf("P_OUT_A       = %i\r\n", P_OUT_A);
+    out->printf("I_PA_A        = %i\r\n", I_PA_A);
+    out->printf("T_PRE_RX_A    = %i\r\n", T_PRE_RX_A);
+    out->printf("T_LDO_A       = %i\r\n", T_LDO_A);
+    out->printf("P_IN_A        = %i\r\n", P_IN_A);
+    out->printf("T_PA_A        = %i\r\n", T_PA_A);
+    out->printf("T_PRE_TX2_A   = %i\r\n", T_PRE_TX2_A);
+    out->printf("T_PRE_TX3_A   = %i\r\n", T_PRE_TX3_A);
+    out->printf("P_OUT_B       = %i\r\n", P_OUT_B);
+    out->printf("I_PA_B        = %i\r\n", I_PA_B);
+    out->printf("T_PRE_RX_B    = %i\r\n", T_PRE_RX_B);
+    out->printf("T_LDO_B       = %i\r\n", T_LDO_B);
+    out->printf("P_IN_B        = %i\r\n", P_IN_B);
+    out->printf("T_PA_B        = %i\r\n", T_PA_B);
+    out->printf("T_PRE_TX2_B   = %i\r\n", T_PRE_TX2_B);
+    out->printf("T_PRE_TX3_B   = %i\r\n", T_PRE_TX3_B);
     out->printf("DAC_TEMPDATA  = %i\r\n", dac3484.get_temp());
     out->printf("E_DAC_ALARM   = %x\r\n", ((E_DAC)&(~0x0040)) );
     dac3484.clear_alarms();
@@ -71,33 +71,33 @@ void dump_telemetry(RawSerial *out)
 
 void go_safe_and_reset(const char* reason)
 {
-	switch_to_safe(&afe_a);
-	switch_to_safe(&afe_b);
+    switch_to_safe(&afe_a);
+    switch_to_safe(&afe_b);
 
-	// switch to internal clock source before mux'ing external clock sources
-	switch_to_int_osc();
+    // switch to internal clock source before mux'ing external clock sources
+    switch_to_int_osc();
 
-	// mux external clock source to external MCU oscillator
-	osc_en = 1;
+    // mux external clock source to external MCU oscillator
+    osc_en = 1;
 
-	// wait to stabilize
-	wait_ms(10);
+    // wait to stabilize
+    wait_ms(10);
 
-	// switch back to external clock source.
-	switch_to_ext_osc();
+    // switch back to external clock source.
+    switch_to_ext_osc();
 
-	// shutdown everything else
-	configure_grav_safe(&afe_0);
+    // shutdown everything else
+    configure_grav_safe(&afe_0);
 
-	pc.printf("ERROR: POWERED DOWN. %s\r\n", reason);
+    pc.printf("ERROR: POWERED DOWN. %s\r\n", reason);
 
-	dump_telemetry(&pc);
+    dump_telemetry(&pc);
 
-	pc.printf("LOG: halted. resetting in 5 seconds.\r\n");
+    pc.printf("LOG: halted. resetting in 5 seconds.\r\n");
 
-	wait_ms(5000);
+    wait_ms(5000);
 
-	NVIC_SystemReset();
+    NVIC_SystemReset();
 }
 
 
@@ -106,93 +106,96 @@ void go_safe_and_reset(const char* reason)
  */
 uint16_t safety_check(uint16_t test_item)
 {
-	int32_t value;
+    int32_t value;
 
-	switch( test_item )
+    switch( test_item )
 	{
 	case 0:
-		value = V2V5;
-/*		if( (2400 > value) || (2600 < value) ) go_safe_and_reset("2.5V rail out of spec");*/
-		break;
+	    value = V2V5;
+	    if( (2400 > value) || (2600 < value) ) go_safe_and_reset("2.5V rail out of spec");
+	    break;
 	case 1:
-		value = V1V8;
-//		if( (1700 > value) || (1900 < value) ) go_safe_and_reset("1.8V rail out of spec");
-		break;
+	    value = V1V8;
+	    if( (1700 > value) || (1900 < value) ) go_safe_and_reset("1.8V rail out of spec");
+	    break;
 	case 2:
-		value = V3V8;
-//		if( (3550 > value) || (4000 < value) ) go_safe_and_reset("3.8V rail out of spec");
-		break;
+	    value = V3V8;
+	    if( (3500 > value) || (4000 < value) ) {
+		pc.printf("3.8 value: %d", value);
+		go_safe_and_reset("3.8V rail out of spec");
+	    }
+	    break;
 	case 3:
-		value = V5V5;
-//		if( (1 > value) || (5750 < value) ) go_safe_and_reset("5.5V rail out of spec");
-		break;
+	    value = V5V5;
+	    if( (5000 > value) || (5750 < value) ) go_safe_and_reset("5.5V rail out of spec");
+	    break;
 	case 4:
-		value = V5V5N;
-//		if( (-6100 /*telemetry is wrong so this value is wrong to compensagte*/ > value) ||
-//			(-5350 < value) )
-//		        go_safe_and_reset("negative 5.5V rail out of spec");
-		break;
+	    value = V5V5N;
+	    if( (-6100 /*telemetry is wrong so this value is wrong to compensagte*/ > value) ||
+		(-5350 < value) )
+		go_safe_and_reset("negative 5.5V rail out of spec");
+	    break;
 	case 5:
-		value = V29;
-//		if( (28750 > value) || (29250 < value) ) go_safe_and_reset("29V rail out of spec");
-		break;
+	    value = V29;
+	    if( (28750 > value) || (29500 < value) ) go_safe_and_reset("29V rail out of spec");
+	    break;
 	case 6:
-		if( 60 < AFE_CH_A_TEMP ) go_safe_and_reset("AFE #A overheated");
-		break;
+	    if( 60 < AFE_CH_A_TEMP ) go_safe_and_reset("AFE #A overheated");
+	    break;
 	case 7:
-		if( 60 < AFE_CH_B_TEMP ) go_safe_and_reset("AFE #B overheated");
-		break;
+	    if( 60 < AFE_CH_B_TEMP ) go_safe_and_reset("AFE #B overheated");
+	    break;
 	case 8:
-		if( 60 < AFE_MAIN_TEMP ) go_safe_and_reset("Main AFE overheated");
-		break;
+	    if( 60 < AFE_MAIN_TEMP ) go_safe_and_reset("Main AFE overheated");
+	    break;
 
 
 	case 9:
-		if( 70 < ADC_LM20 ) go_safe_and_reset("ADC overheated");
-		break;
+	    if( 70 < ADC_LM20 ) go_safe_and_reset("ADC overheated");
+	    break;
 	case 10:
-		if( 70 < T_PRE_RX_A ) go_safe_and_reset("RX preamp #A overheated");
-		break;
+	    if( 70 < T_PRE_RX_A ) go_safe_and_reset("RX preamp #A overheated");
+	    break;
 	case 11:
-		if( 70 < T_LDO_A ) go_safe_and_reset("LDO #A overheated");
-		break;
+	    if( 70 < T_LDO_A ) go_safe_and_reset("LDO #A overheated");
+	    break;
 	case 12:
-		if( 90 < T_PA_A ) go_safe_and_reset("PA #A overheated");
-		break;
+	    if( 90 < T_PA_A ) go_safe_and_reset("PA #A overheated");
+	    break;
 	case 13:
-		if( 70 < T_PRE_TX2_A ) go_safe_and_reset("TX preamp 2 #A overheated");
-		break;
+	    if( 70 < T_PRE_TX2_A ) go_safe_and_reset("TX preamp 2 #A overheated");
+	    break;
 	case 14:
-		if( 70 < T_PRE_TX3_A ) go_safe_and_reset("TX preamp 3 #A overheated");
-		break;
+	    if( 70 < T_PRE_TX3_A ) go_safe_and_reset("TX preamp 3 #A overheated");
+	    break;
 	case 15:
-//		if( 33 < P_IN_A ) go_safe_and_reset("PA #A return power > 2 Watts");
-		break;
+	    //if( 33 < P_IN_A ) go_safe_and_reset("PA #A return power > 2 Watts");
+	    break;
 
 
 	case 16:
-		if( 70 < T_PRE_RX_B ) go_safe_and_reset("RX preamp #B overheated");
-		break;
+	    if( 70 < T_PRE_RX_B ) go_safe_and_reset("RX preamp #B overheated");
+	    break;
 	case 17:
-		if( 70 < T_LDO_B ) go_safe_and_reset("LDO #B overheated");
-		break;
+	    if( 70 < T_LDO_B ) go_safe_and_reset("LDO #B overheated");
+	    break;
 	case 18:
-		if( 90 < T_PA_B ) go_safe_and_reset("PA #B overheated");
-		break;
+	    if( 90 < T_PA_B ) go_safe_and_reset("PA #B overheated");
+	    break;
 	case 19:
-		if( 70 < T_PRE_TX2_B ) go_safe_and_reset("TX preamp 2 #B overheated");
-		break;
+	    if( 70 < T_PRE_TX2_B ) go_safe_and_reset("TX preamp 2 #B overheated");
+	    break;
 	case 20:
-		if( 70 < T_PRE_TX3_B ) go_safe_and_reset("TX preamp 3 #B overheated");
-		break;
+	    if( 70 < T_PRE_TX3_B ) go_safe_and_reset("TX preamp 3 #B overheated");
+	    break;
 	case 21:
-//		if( 33 < P_IN_B ) go_safe_and_reset("PA #B return power > 2 Watts");
-		break;
+	    //if( 33 < P_IN_B ) go_safe_and_reset("PA #B return power > 2 Watts");
+	    break;
 	default:
-		return 0;
+	    return 0;
 	}
 
-	return ++test_item;
+    return ++test_item;
 }
 
 
@@ -201,8 +204,8 @@ uint16_t safety_check(uint16_t test_item)
  */
 void safety_check()
 {
-	uint16_t item = 0;
-	while( 0 < safety_check(item++) ) { }
+    uint16_t item = 0;
+    while( 0 < safety_check(item++) ) { }
 }
 
 
@@ -211,156 +214,156 @@ void safety_check()
  */
 void calibrate_power_amplifier(AMC7891 *afe)
 {
-	uint32_t counts;
-	uint32_t v29_bus;
+    uint32_t counts;
+    uint32_t v29_bus;
 
-	v29_bus = V29;
+    v29_bus = V29;
 
-	pc.printf("LOG: Calibrating power amplifier\r\n");
+    pc.printf("LOG: Calibrating power amplifier\r\n");
 
-	// Set VGG to -3800mV as a starting point (never seems to be lower than this)
-	counts = conv_mv_to_dac_counts_for_vgg_circuit( -3800 /*mV*/ );
-	afe->write_dac(GRAV_DAC_VGSET, counts);
+    // Set VGG to -3800mV as a starting point (never seems to be lower than this)
+    counts = conv_mv_to_dac_counts_for_vgg_circuit( -3800 /*mV*/ );
+    afe->write_dac(GRAV_DAC_VGSET, counts);
 
-	// Enable that scary Power Amplfier
-	afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_TX);
+    // Enable that scary Power Amplfier
+    afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_TX);
 
-	// Bring it down until shoot-thru current is 100mA
+    // Bring it down until shoot-thru current is 100mA
 
-	while( 100 /*mA*/ > conv_mv_i_pa(get_mv(afe, GRAV_ADC_I_PA, GAIN_1X)) )
+    while( 100 /*mA*/ > conv_mv_i_pa(get_mv(afe, GRAV_ADC_I_PA, GAIN_1X)) )
 	{
-		afe->write_dac(GRAV_DAC_VGSET, --counts);
-		wait_ms(1);
-		// If the input rail drops by more than 100mV then something is wrong
-		if( (v29_bus - 100 /*mV*/)  > V29 ) go_safe_and_reset("V29 drop during calibration");
-		pc.printf(".");
-		wait_ms(25); // no reason to do this fast
-		if( conv_dac_counts_to_mv_for_vgg_circuit(counts) > -2000 /*mV*/ )
+	    afe->write_dac(GRAV_DAC_VGSET, --counts);
+	    wait_ms(1);
+	    // If the input rail drops by more than 100mV then something is wrong
+	    if( (v29_bus - 100 /*mV*/)  > V29 ) go_safe_and_reset("V29 drop during calibration");
+	    pc.printf(".");
+	    wait_ms(25); // no reason to do this fast
+	    if( conv_dac_counts_to_mv_for_vgg_circuit(counts) > -2000 /*mV*/ )
 		{
-			counts = conv_mv_to_dac_counts_for_vgg_circuit( -3800 /*mV*/ );
-			pc.printf("\r\nfailed to calibrate power amplifier (Vg went above -2000mV)\r\n");
-			break;
+		    counts = conv_mv_to_dac_counts_for_vgg_circuit( -3800 /*mV*/ );
+		    pc.printf("\r\nfailed to calibrate power amplifier (Vg went above -2000mV)\r\n");
+		    break;
 		}
 	}
-	counts += 2;
-	afe->write_dac(GRAV_DAC_VGSET, counts);
+    counts += 2;
+    afe->write_dac(GRAV_DAC_VGSET, counts);
 
-	// Disable Power Amplfier
-	afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_RX);
+    // Disable Power Amplfier
+    afe->write_dac(GRAV_DAC_PA_EN, GRAV_DAC_PA_EN_RX);
 
-	pc.printf("\r\nLOG: Done with power amplifier(Vgg = %imV, I = %imA)\r\n",
-			conv_dac_counts_to_mv_for_vgg_circuit(counts),
-			conv_mv_i_pa(get_mv(afe, GRAV_ADC_I_PA, GAIN_1X)));
+    pc.printf("\r\nLOG: Done with power amplifier(Vgg = %imV, I = %imA)\r\n",
+	      conv_dac_counts_to_mv_for_vgg_circuit(counts),
+	      conv_mv_i_pa(get_mv(afe, GRAV_ADC_I_PA, GAIN_1X)));
 
-	afe->vg_setpoint = counts;
-	afe->vg_quiescent = conv_mv_to_dac_counts_for_vgg_circuit(conv_dac_counts_to_mv_for_vgg_circuit(counts) - 100 /*mV*/ );
+    afe->vg_setpoint = counts;
+    afe->vg_quiescent = conv_mv_to_dac_counts_for_vgg_circuit(conv_dac_counts_to_mv_for_vgg_circuit(counts) - 100 /*mV*/ );
 }
 
 
 void init()
 {
-	uint8_t ret;
+    uint8_t ret;
 
-	set_time(0);
+    set_time(0);
 
-	buzzer = 0;       // buzzer doesn't actually work
-	osc_en = 0;       // not yet ready to setup oscillator
+    buzzer = 0;       // buzzer doesn't actually work
+    osc_en = 0;       // not yet ready to setup oscillator
 
-	wait_ms(100);      // Wait for power supplies to come up
+    wait_ms(100);      // Wait for power supplies to come up
 
-	// Set serial port baud
-	pc.baud(115200);
+    // Set serial port baud
+    pc.baud(115200);
 
-	//pc.printf("\033[2J\033[1;1H");
-	pc.printf("\r\n\r\n\r\nGRAVITON HARDWARE VERSION 3.0\r\n");
-	pc.printf("FIRMWARE VERSION 0.1\r\n");
-	pc.printf("SIGNAL LABORATORIES, INC.\r\n");
+    //pc.printf("\033[2J\033[1;1H");
+    pc.printf("\r\n\r\n\r\nGRAVITON HARDWARE VERSION 3.0\r\n");
+    pc.printf("FIRMWARE VERSION 0.1\r\n");
+    pc.printf("SIGNAL LABORATORIES, INC.\r\n");
 
-	pc.printf("LOG: attempting to change to external oscillator\r\n");
+    pc.printf("LOG: attempting to change to external oscillator\r\n");
 
-	osc_en = 1;       // Turn on External Oscillator
+    osc_en = 1;       // Turn on External Oscillator
 
-	wait_ms(500);      // Wait for it to stabilize
+    wait_ms(500);      // Wait for it to stabilize
 
-	// Change internal clock source to external oscillator
-	ret = switch_to_ext_osc();
+    // Change internal clock source to external oscillator
+    ret = switch_to_ext_osc();
 
-	// Set serial port baud again (it got messed up when we changed the clock)
-	pc.baud(115200);
-	fpga.baud(115200);
+    // Set serial port baud again (it got messed up when we changed the clock)
+    pc.baud(115200);
+    fpga.baud(115200);
 
-	if( 1 == ret )
-		pc.printf("LOG: external oscillator configured\r\n");
-	else
+    if( 1 == ret )
+	pc.printf("LOG: external oscillator configured\r\n");
+    else
 	{
-		pc.printf("ERROR: EXTERNAL OSCILLATOR FAILED TO CONFIGURE. HALTING\r\n");
-		while(1) { }
+	    pc.printf("ERROR: EXTERNAL OSCILLATOR FAILED TO CONFIGURE. HALTING\r\n");
+	    while(1) { }
 	}
 
-	// Set SPI bus format super slow to ensure proper
-	// programming of ADC, DAC, CLOCK, and SYNTH
-	spi_bus.format(8,1);
-	spi_bus.frequency(500000);
+    // Set SPI bus format super slow to ensure proper
+    // programming of ADC, DAC, CLOCK, and SYNTH
+    spi_bus.format(8,1);
+    spi_bus.frequency(500000);
 
-	// Initialize all AFE chips
-	afe_a.init();
-	afe_b.init();
-	afe_0.init();
+    // Initialize all AFE chips
+    afe_a.init();
+    afe_b.init();
+    afe_0.init();
 
-	// Configure main AFE
-	configure_grav_safe(&afe_0);
+    // Configure main AFE
+    configure_grav_safe(&afe_0);
 
-	// Configure RF AFE
-	switch_to_safe(&afe_a);
-	switch_to_safe(&afe_b);
+    // Configure RF AFE
+    switch_to_safe(&afe_a);
+    switch_to_safe(&afe_b);
 
-	// Wait for Copper Suicide to come up
-	wait_ms(500);
+    // Wait for Copper Suicide to come up
+    wait_ms(500);
 
-	// If I/O busses are unpowered then power them
-	if( (V2V5 < 100) && (V1V8 < 100) ) {
-		pc.printf("V2V5: %d V1V8: %d\r\n", V2V5, V1V8);
-		configure_grav_on_with_tx_off(&afe_0);
-	} else {
-		pc.printf("V2V5: %d V1V8: %d\r\n", V2V5, V1V8);
-		pc.printf("ERROR: BUS IS POWERED. HALTING\r\n");
-		//while(1) { }
-	}
+    // If I/O busses are unpowered then power them
+    if( (V2V5 < 100) && (V1V8 < 100) ) {
+	pc.printf("V2V5: %d V1V8: %d\r\n", V2V5, V1V8);
+	configure_grav_on_with_tx_off(&afe_0);
+    } else {
+	pc.printf("V2V5: %d V1V8: %d\r\n", V2V5, V1V8);
+	pc.printf("ERROR: BUS IS POWERED. HALTING\r\n");
+	//while(1) { }
+    }
 
-	// Wait for power supplies to stabilize
-	wait_ms(100);
+    // Wait for power supplies to stabilize
+    wait_ms(100);
 
-	pc.printf("LOG: checking everything...\r\n");
+    pc.printf("LOG: checking everything...\r\n");
 
-	//safety_check();
+    //safety_check();
 
-	dump_telemetry(&pc);
+    dump_telemetry(&pc);
 
-	// bring up clocks
-	lmk04826b.init();
-	lmk04133.init();
-	ads42lb69.init();
-	dac3484.init(&pc);
+    // bring up clocks
+    lmk04826b.init();
+    lmk04133.init();
+    ads42lb69.init();
+    dac3484.init(&pc);
 
-	// once ADC, DAC, CLOCK, and SYNTH programmed then increase SPI bus speed
-	spi_bus.frequency(500000);
+    // once ADC, DAC, CLOCK, and SYNTH programmed then increase SPI bus speed
+    spi_bus.frequency(500000);
 
-	// calibrating power amplifiers
+    // calibrating power amplifiers
 
-	//safety_check();
+    //safety_check();
 
-	calibrate_power_amplifier(&afe_a);
-	calibrate_power_amplifier(&afe_b);
+    calibrate_power_amplifier(&afe_a);
+    calibrate_power_amplifier(&afe_b);
 
-	//safety_check();
+    //safety_check();
 
-	// Configure RF AFE
-	switch_to_safe(&afe_a);
-	switch_to_safe(&afe_b);
+    // Configure RF AFE
+    switch_to_safe(&afe_a);
+    switch_to_safe(&afe_b);
 
-	dump_telemetry(&pc);
+    dump_telemetry(&pc);
 
-	pc.printf("LOG: Ready!\n\r");
+    pc.printf("LOG: Ready!\n\r");
 }
 
 
@@ -387,129 +390,153 @@ void init()
  */
 void changeState(uint8_t msg)
 {
-	if( (CS_RX == (CS_RX_FLAG_MASK & msg)) && (CS_AFE_A == (CS_AFE_MASK & msg)) )
-		switch_to_rx(&afe_a, CS_OP_CODE_MASK & msg);
-	if( (CS_RX == (CS_RX_FLAG_MASK & msg)) && (CS_AFE_B == (CS_AFE_MASK & msg)) )
-		switch_to_rx(&afe_b, CS_OP_CODE_MASK & msg);
-	if( CS_RX != (CS_RX_FLAG_MASK & msg) )
-		switch( CS_OP_CODE_MASK & msg )
-		{
-		case CS_OP_CODE_0:
-			switch_to_safe(&afe_a);
-			switch_to_safe(&afe_b);
-			break;
-		case CS_OP_CODE_1:
-			//dump_telemetry(&fpga);
-			break;
-		case CS_OP_CODE_2:
-			dump_telemetry(&pc);
-			break;
-		case CS_OP_CODE_3:
-			if( CS_AFE_A == (CS_AFE_MASK & msg) )
-				switch_to_tx(&afe_a);
-			if( CS_AFE_B == (CS_AFE_MASK & msg) )
-				switch_to_tx(&afe_b);
-			break;
-		case CS_OP_CODE_4:
-		case CS_OP_CODE_5:
-		case CS_OP_CODE_6:
-		case CS_OP_CODE_7:
-		case CS_OP_CODE_8:
-		case CS_OP_CODE_9:
-		case CS_OP_CODE_10:
-		case CS_OP_CODE_11:
-		case CS_OP_CODE_12:
-		case CS_OP_CODE_13:
-		case CS_OP_CODE_14:
-		case CS_OP_CODE_15:
-		case CS_OP_CODE_16:
-		case CS_OP_CODE_17:
-		case CS_OP_CODE_18:
-		case CS_OP_CODE_19:
-			dac3484.set_current((CS_OP_CODE_MASK & msg) - CS_OP_CODE_4);
-			break;
-		case CS_OP_CODE_20:
-			pc.printf("\033[0;0H");
-			pc.printf("P_IN_A        = %i    \r\n", P_IN_A);
-			pc.printf("P_OUT_A       = %i    \r\n", P_OUT_A);
-		case CS_OP_CODE_63:
-		default:
-			break;
-		}
+    if( (CS_RX == (CS_RX_FLAG_MASK & msg)) && (CS_AFE_A == (CS_AFE_MASK & msg)) )
+	switch_to_rx(&afe_a, CS_OP_CODE_MASK & msg);
+    if( (CS_RX == (CS_RX_FLAG_MASK & msg)) && (CS_AFE_B == (CS_AFE_MASK & msg)) )
+	switch_to_rx(&afe_b, CS_OP_CODE_MASK & msg);
+    if( CS_RX != (CS_RX_FLAG_MASK & msg) )
+	switch( CS_OP_CODE_MASK & msg )
+	    {
+	    case CS_OP_CODE_0:
+		switch_to_safe(&afe_a);
+		switch_to_safe(&afe_b);
+		break;
+	    case CS_OP_CODE_1:
+		dump_telemetry(&fpga);
+		break;
+	    case CS_OP_CODE_2:
+		dump_telemetry(&pc);
+		break;
+	    case CS_OP_CODE_3:
+		if( CS_AFE_A == (CS_AFE_MASK & msg) )
+		    switch_to_tx(&afe_a);
+		if( CS_AFE_B == (CS_AFE_MASK & msg) )
+		    switch_to_tx(&afe_b);
+		break;
+	    case CS_OP_CODE_4:
+	    case CS_OP_CODE_5:
+	    case CS_OP_CODE_6:
+	    case CS_OP_CODE_7:
+	    case CS_OP_CODE_8:
+	    case CS_OP_CODE_9:
+	    case CS_OP_CODE_10:
+	    case CS_OP_CODE_11:
+	    case CS_OP_CODE_12:
+	    case CS_OP_CODE_13:
+	    case CS_OP_CODE_14:
+	    case CS_OP_CODE_15:
+	    case CS_OP_CODE_16:
+	    case CS_OP_CODE_17:
+	    case CS_OP_CODE_18:
+	    case CS_OP_CODE_19:
+		dac3484.set_current(&pc, (CS_OP_CODE_MASK & msg) - CS_OP_CODE_4);
+		break;
+	    case CS_OP_CODE_20:
+		pc.printf("\033[0;0H");
+		pc.printf("P_IN_A        = %i    \r\n", P_IN_A);
+		pc.printf("P_OUT_A       = %i    \r\n", P_OUT_A);
+		break;
+	    case CS_OP_CODE_21:
+		dac3484.read_config(&pc);
+		break;
+	    case CS_OP_CODE_22:
+		if(CS_AFE_A == (CS_AFE_MASK & msg))
+		    switch_to_safe(&afe_a);
+		if(CS_AFE_B == (CS_AFE_MASK & msg))
+		    switch_to_safe(&afe_b);
+	    case CS_OP_CODE_63:
+	    default:
+		break;
+	    }
 }
 
 
 int main()
 {
-	int initial_wait=0;
-	while(initial_wait != 5000000) {
-		initial_wait++;
-	}
+    int initial_wait=0;
+    while(initial_wait != 5000000) {
+	initial_wait++;
+    }
 
-	uint16_t check = 0;                   // safety checklist item number
+    uint16_t check = 0;                   // safety checklist item number
 
-	// initialize entire board
-	init();
+    // initialize entire board
+    init();
 
-	int slow = 1;
+    int slow = 1;
 
-	int mode_switched = 0;
+    int mode_switched = 0;
 
-	int dac_current = 0;
+    int dac_current = 0;
 
-	while(1)
+    while(1)
 	{
-		if(slow % 1000000 == 0 ) {
-//			pc.printf("x\n");
-			//slow = 0;
-			if(!mode_switched) {
-				pc.printf("switched to tx a\n");
-				mode_switched = 1;
-				// changeState(CS_OP_CODE_3 | CS_AFE_A);
-//				changeState(CS_OP_CODE_19 | 0x400);
-//				changeState(CS_OP_CODE_7); // dac current
-				//changeState(CS_OP_CODE_18); // dac current
-				// configure_grav_on_with_tx_on(&afe_0);
-			}
-			changeState(CS_OP_CODE_2);
-            fpga.printf("hello\r\n");
-        }
-		slow++;
-
-		/*if(slow % 5000000 == 0 && mode_switched) {
-			changeState(CS_OP_CODE_4 + dac_current);
-			pc.printf("DAC_CURRENT: %d\n", dac_current);
-			dac_current++;
-			if(dac_current == 15) {
-				dac_current = 0;
-			}
-		}*/
-
-		if( true || interrupt )
-		{
-			//
-			// it takes up to 200us to guarantee entry into this block so
-			// make sure user pulses interrupt pin for 200us. Note that
-			// no new safety checks are called when interrupt is high
-			// so dont pulse it for more than 200us.
-			//
-
-            // pc.printf("before\r\n");
-
-			// while( interrupt ) { }
-
-			// process commands first-in-first-out
-            while( fpga.readable() ) {
-                pc.printf("char: %d\r\n", (int)fpga.getc());
-			}
-			// if either one of the channels is set to transmit then enable DAC output
-			// if( (AMC7891_MODE_TX == afe_a.mode) | (AMC7891_MODE_TX == afe_b.mode) )
-			// 	configure_grav_on_with_tx_on(&afe_0);
-			// else
-			// 	configure_grav_on_with_tx_off(&afe_0);
+	    if(slow % 10000 == 0 ) {
+		//			pc.printf("x\n");
+		//slow = 0;
+		if(!mode_switched) {
+		    pc.printf("switched to tx a\n");
+		    mode_switched = 1;
+		    changeState(CS_OP_CODE_3 | CS_AFE_A);
+		    //				changeState(CS_OP_CODE_19 | 0x400);
+		    //changeState(CS_OP_CODE_7); // dac current
+		    changeState(CS_OP_CODE_21);
+		    //changeState(CS_OP_CODE_18); // dac current
+		    // configure_grav_on_with_tx_on(&afe_0);
 		}
+		//changeState(CS_OP_CODE_2);
+		fpga.printf("hello\r\n");
+	    }
+	    slow++;
 
-		//check = safety_check(check);
+	    if(fpga.readable()) {
+		uint8_t val = fpga.getc();
+		pc.printf("received char: %d\r\n", (int) val);
+		changeState(val);
+		// either one of the channels is set to transmit then enable DAC output
+		if( (AMC7891_MODE_TX == afe_a.mode) | (AMC7891_MODE_TX == afe_b.mode) )
+		    configure_grav_on_with_tx_on(&afe_0);
+		else
+		    configure_grav_on_with_tx_off(&afe_0);
+	    }
+	    //pc.printf("BEFORE safety check\r\n");
+	    check = safety_check(check);
+	    //pc.printf("AFTER safety check\r\n");
+	    /*if(slow % 5000000 == 0 && mode_switched) {
+	      changeState(CS_OP_CODE_4 + dac_current);
+	      pc.printf("DAC_CURRENT: %d\n", dac_current);
+	      dac_current++;
+	      if(dac_current == 15) {
+	      dac_current = 0;
+	      }
+	      }*/
+
+	    /*if( true || interrupt )
+	      {
+	      //
+	      // it takes up to 200us to guarantee entry into this block so
+	      // make sure user pulses interrupt pin for 200us. Note that
+	      // no new safety checks are called when interrupt is high
+	      // so dont pulse it for more than 200us.
+	      //
+
+	      // pc.printf("before\r\n");
+
+	      // while( interrupt ) { }
+
+	      // process commands first-in-first-out
+	      while( fpga.readable() ) {
+	      chan
+	      pc.printf("char: %d\r\n", (int)fpga.getc());
+	      }
+	      // if either one of the channels is set to transmit then enable DAC output
+	      // if( (AMC7891_MODE_TX == afe_a.mode) | (AMC7891_MODE_TX == afe_b.mode) )
+	      // 	configure_grav_on_with_tx_on(&afe_0);
+	      // else
+	      // 	configure_grav_on_with_tx_off(&afe_0);
+	      }
+	    */
+	    //check = safety_check(check);
 	}
 }
 

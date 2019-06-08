@@ -20,8 +20,8 @@ public:
 	DAC3484(SPI *bus, PinName select, PinName rst_pin);
 
 	void init(RawSerial* serial);
-
-	void set_current(uint8_t val);
+	void read_config(RawSerial* serial);
+	void set_current(RawSerial* serial, uint8_t val);
 	int8_t get_temp();
 	uint16_t read_alarms();
 	int8_t data_pattern_checker();
