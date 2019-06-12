@@ -9,7 +9,6 @@
 #include "ads42lb69.h"
 #include "dac3484.h"
 #include "RiscvInterface.hpp"
-// #include "stdio.h"
 
 void set_led(const unsigned idx, const bool val);
 void go_safe_and_reset(const char* reason, const char* reason2 = 0, const int32_t reason3 = 0);
@@ -136,10 +135,6 @@ soft_bottom_tolerance_t v3v8v_soft =
 {  3400,   3500,   4000,      100,       0,  "3.8", "3.8V rail out of spec"};
 
 
-// char gsartol_buffer[64];
-
-// void gsartol_print()
-
 // returns true if error / we did reset
 bool go_safe_and_reset_tolerance(soft_bottom_tolerance_t* tolerance, const int32_t value, const char* reason) {
 
@@ -175,20 +170,8 @@ bool go_safe_and_reset_tolerance(soft_bottom_tolerance_t* tolerance, const int32
         return false;
     }
 
-    // tolerance_t a;
-
-    // a.value = 43;
-    // a.tol = 4500;
-
-    // tolerance_t b = {43, 4500};
-    // std::pair<int,int> foo;
-    // (void)foo;
     return false;
 }
-
-// bool reset_tolerance(const uint16_t test_item) {
-//     return true;
-// }
 
 /*
  * Run a specific safety check and return the next safety check in the list.
