@@ -136,9 +136,12 @@ typedef struct {
 soft_bottom_tolerance_t v3v8v_soft =
 {  3400,   3500,   4000,      100,       0,  "3.8", "3.8V rail out of spec"};
 
+soft_bottom_tolerance_t v5v5v_soft =
+{  4800,   4900,   5750,      100,       0,  "5.5", "5.5V rail out of spec"};
+
 
 // returns true if error / we did reset
-bool go_safe_and_reset_tolerance(soft_bottom_tolerance_t* tolerance, const int32_t value, const char* reason) {
+bool go_safe_and_reset_tolerance(soft_bottom_tolerance_t* tolerance, const int32_t value) {
 
     // tolerance_t* tolerance = &(saftey_tolerance[test_item]);
 
@@ -148,12 +151,14 @@ bool go_safe_and_reset_tolerance(soft_bottom_tolerance_t* tolerance, const int32
     // go_safe_and_reset("3.8V rail out of spec");
      //    }
 
+    // check against hard lower and hard upper first
     if( (tolerance->lower_hard > value) || (tolerance->upper_hard < value) ) {
         go_safe_and_reset(tolerance->msg, tolerance->name, value);
         return true;
     }
 
 
+    // check against soft lower
     if( (tolerance->lower_tol > value) ) {
         if( tolerance->violations >= tolerance->repeat_tol ) {
             go_safe_and_reset(tolerance->msg, tolerance->name, value);
@@ -206,7 +211,7 @@ uint16_t safety_check(const uint16_t test_item)
         break;
     case 2:
         value = V3V8;
-        go_safe_and_reset_tolerance(&v3v8v_soft, value, "3.8V rail out of spec");
+        go_safe_and_reset_tolerance(&v3v8v_soft, value);
      //    if( (3500 > value) || (4000 < value) ) {
         // pc.printf("3.8 value: %d", value);
         // go_safe_and_reset("3.8V rail out of spec");
@@ -214,7 +219,8 @@ uint16_t safety_check(const uint16_t test_item)
         break;
     case 3:
         value = V5V5;
-        if( (5000 > value) || (5750 < value) ) go_safe_and_reset("5.5V rail out of spec");
+        // if( (5000 > value) || (5750 < value) ) go_safe_and_reset("5.5V rail out of spec", "5.5", value);
+        go_safe_and_reset_tolerance(&v5v5v_soft, value);
         break;
     case 4:
         value = V5V5N;
