@@ -9,8 +9,10 @@
 #include "ads42lb69.h"
 #include "dac3484.h"
 #include "RiscvInterface.hpp"
+// #include "stdio.h"
 
 void set_led(const unsigned idx, const bool val);
+void go_safe_and_reset(const char* reason);
 
 
 // order is  tx,   rx
@@ -108,11 +110,85 @@ void go_safe_and_reset(const char* reason)
     NVIC_SystemReset();
 }
 
+typedef struct {
+    const int32_t lower_hard;
+    const int32_t lower_tol;
+    const int32_t upper_hard;
+    const int32_t repeat_tol;
+    int32_t violations;
+    const char* name;       // short name which we print, and print 'value: ' afterwards
+    const char* msg;        // full message to print, like previous code
+} soft_bottom_tolerance_t;
+
+
+// This has a soft bottom and a hard bottom, with a hard top
+// the value is only allowed to be below the soft bottom for a certain amount of time
+// (the units are iterations).  If it is below the soft bottom for more than N
+// iterations, it triggers a fault
+// if it is below the hard bottom for above the hard top we trigger fault immedaitly
+soft_bottom_tolerance_t v3v8v_soft =
+{  3400,   3500,   4000,      25,       0,  "3.8", "3.8V rail out of spec"};
+
+
+
+// returns true if error / we did reset
+bool go_safe_and_reset_tolerance(soft_bottom_tolerance_t* tolerance, const int32_t value, const char* reason) {
+
+    // tolerance_t* tolerance = &(saftey_tolerance[test_item]);
+
+
+    //    if( (3500 > value) || (4000 < value) ) {
+    // pc.printf("3.8 value: %d", value);
+    // go_safe_and_reset("3.8V rail out of spec");
+     //    }
+
+    if( (tolerance->lower_hard > value) || (tolerance->upper_hard < value) ) {
+        pc.puts(tolerance->name);
+        pc.printf(" value: %d\r\n", value);
+        go_safe_and_reset(tolerance->msg);
+        return true;
+    }
+
+
+    if( (tolerance->lower_tol > value) ) {
+        if( tolerance->violations >= tolerance->repeat_tol ) {
+            pc.puts(tolerance->name);
+            pc.printf(" value: %d\r\n", value);
+            go_safe_and_reset(tolerance->msg);
+            return true;
+        }
+        
+        // increment now
+        tolerance->violations++;
+
+        pc.printf("%s r: %d v: %d\r\n", tolerance->name, tolerance->violations, value);
+
+        return false;
+    } else {
+
+        tolerance->violations = 0;
+        return false;
+    }
+
+    // tolerance_t a;
+
+    // a.value = 43;
+    // a.tol = 4500;
+
+    // tolerance_t b = {43, 4500};
+    // std::pair<int,int> foo;
+    // (void)foo;
+    return false;
+}
+
+// bool reset_tolerance(const uint16_t test_item) {
+//     return true;
+// }
 
 /*
  * Run a specific safety check and return the next safety check in the list.
  */
-uint16_t safety_check(uint16_t test_item)
+uint16_t safety_check(const uint16_t test_item)
 {
     int32_t value;
 
@@ -128,10 +204,11 @@ uint16_t safety_check(uint16_t test_item)
 	    break;
 	case 2:
 	    value = V3V8;
-	    if( (3500 > value) || (4000 < value) ) {
-		pc.printf("3.8 value: %d", value);
-		go_safe_and_reset("3.8V rail out of spec");
-	    }
+        go_safe_and_reset_tolerance(&v3v8v_soft, value, "3.8V rail out of spec");
+	 //    if( (3500 > value) || (4000 < value) ) {
+		// pc.printf("3.8 value: %d", value);
+		// go_safe_and_reset("3.8V rail out of spec");
+	 //    }
 	    break;
 	case 3:
 	    value = V5V5;
@@ -203,18 +280,18 @@ uint16_t safety_check(uint16_t test_item)
 	    return 0;
 	}
 
-    return ++test_item;
+    return test_item+1;
 }
 
 
 /*
  * Safety check all items
  */
-void safety_check()
-{
-    uint16_t item = 0;
-    while( 0 < safety_check(item++) ) { }
-}
+// void safety_check_all()
+// {
+//     uint16_t item = 0;
+//     while( 0 < safety_check(item++) ) { }
+// }
 
 ///
 /// LED stuff
