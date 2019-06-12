@@ -8,6 +8,9 @@
 #include "lmk04133.h"
 #include "ads42lb69.h"
 #include "dac3484.h"
+#include "RiscvInterface.hpp"
+
+void set_led(const unsigned idx, const bool val);
 
 
 // order is  tx,   rx
@@ -16,6 +19,8 @@ RawSerial pc(PA_2, NC);
 // 9 is tx
 // 10 is rx
 RawSerial fpga(PA_9, PA_10); // works
+
+RiscvInterface<RawSerial> riscv(&fpga);
 
 DigitalIn interrupt(PA_8);
 
@@ -95,7 +100,10 @@ void go_safe_and_reset(const char* reason)
 
     pc.printf("LOG: halted. resetting in 5 seconds.\r\n");
 
-    wait_ms(5000);
+    for( int i = 0; i < 5; i++) {
+        riscv.notifyError();
+        wait_ms(1000);
+    }
 
     NVIC_SystemReset();
 }
@@ -206,6 +214,13 @@ void safety_check()
 {
     uint16_t item = 0;
     while( 0 < safety_check(item++) ) { }
+}
+
+///
+/// LED stuff
+/// 
+void set_led(const unsigned idx, const bool val) {
+
 }
 
 
@@ -468,6 +483,7 @@ int main()
     int mode_switched = 0;
 
     int dac_current = 0;
+    (void) dac_current;
 
     while(1)
 	{
@@ -484,8 +500,9 @@ int main()
 		    //changeState(CS_OP_CODE_18); // dac current
 		    // configure_grav_on_with_tx_on(&afe_0);
 		}
-		//changeState(CS_OP_CODE_2);
-		fpga.printf("hello\r\n");
+		changeState(CS_OP_CODE_2);
+		// fpga.printf("hello\r\n");
+            riscv.alive();
 	    }
 	    slow++;
 
