@@ -134,10 +134,13 @@ typedef struct {
 // iterations, it triggers a fault
 // if it is below the hard bottom for above the hard top we trigger fault immedaitly
 soft_bottom_tolerance_t v3v8v_soft =
-{  3400,   3500,   4000,      100,       0,  "3.8", "3.8V rail out of spec"};
+{  3100,   3150,   4000,      100,       0,  "3.8", "3.8V rail out of spec"};
 
 soft_bottom_tolerance_t v5v5v_soft =
-{  4800,   4900,   5750,      100,       0,  "5.5", "5.5V rail out of spec"};
+{  4250,   4300,   5750,      100,       0,  "5.5", "5.5V rail out of spec"};
+
+soft_bottom_tolerance_t v5v5vneg_soft =
+{ -7600,  -7500,  -5350,      100,       0,  "-5.5", "negative 5.5V rail out of spec"};
 
 
 // returns true if error / we did reset
@@ -203,7 +206,7 @@ uint16_t safety_check(const uint16_t test_item)
     {
     case 0:
         value = V2V5;
-        if( (2400 > value) || (2600 < value) ) go_safe_and_reset("2.5V rail out of spec", "2.5", value);
+        if( (1500 > value) || (2600 < value) ) go_safe_and_reset("2.5V rail out of spec", "2.5", value);
         break;
     case 1:
         value = V1V8;
@@ -224,13 +227,14 @@ uint16_t safety_check(const uint16_t test_item)
         break;
     case 4:
         value = V5V5N;
-        if( (-6100 /*telemetry is wrong so this value is wrong to compensate */ > value) ||
-        (-5350 < value) )
-        go_safe_and_reset("negative 5.5V rail out of spec", "negative 5.5", value);
+        /*telemetry is wrong so this value is wrong to compensate */
+        // if( (-6900  > value) || (-5350 < value) )
+        // go_safe_and_reset("negative 5.5V rail out of spec", "negative 5.5", value);
+        go_safe_and_reset_tolerance(&v5v5vneg_soft, value);
         break;
     case 5:
         value = V29;
-        if( (28750 > value) || (29500 < value) ) go_safe_and_reset("29V rail out of spec", "29", value);
+        if( (28000 > value) || (29500 < value) ) go_safe_and_reset("29V rail out of spec", "29", value);
         break;
     case 6:
         if( 60 < AFE_CH_A_TEMP ) go_safe_and_reset("AFE #A overheated");
@@ -482,7 +486,7 @@ void init()
     wait_ms(500);
 
     // If I/O busses are unpowered then power them
-    if( (V2V5 < 100) && (V1V8 < 100) ) {
+    if( (V2V5 < 300) && (V1V8 < 400) ) {
     pc.printf("V2V5: %d V1V8: %d\r\n", V2V5, V1V8);
     configure_grav_on_with_tx_off(&afe_0);
     } else {
