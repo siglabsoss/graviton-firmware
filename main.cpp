@@ -356,7 +356,15 @@ void init_broken_boards() {
         // note that 12 here is the check number and not the board number
         disable_saftey_check(12);
 
-        pc.printf("Board 12 has broken PA #A sensor!!\r\n");
+        pc.printf("Board 012 has broken PA #A sensor!!\r\n");
+    }
+
+    // Board 021
+    // 800f0011    524b4303    20323035
+    if( a == 0x800f0011 && b == 0x524b4303 && c == 0x20323035 ) {
+        disable_saftey_check(11);
+
+        pc.printf("Board 021 has broken LDO #A sensor!!\r\n");
     }
 
 }
