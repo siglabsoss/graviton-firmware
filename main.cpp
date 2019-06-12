@@ -203,11 +203,11 @@ uint16_t safety_check(const uint16_t test_item)
     {
     case 0:
         value = V2V5;
-        if( (2400 > value) || (2600 < value) ) go_safe_and_reset("2.5V rail out of spec");
+        if( (2400 > value) || (2600 < value) ) go_safe_and_reset("2.5V rail out of spec", "2.5", value);
         break;
     case 1:
         value = V1V8;
-        if( (1700 > value) || (1900 < value) ) go_safe_and_reset("1.8V rail out of spec");
+        if( (1700 > value) || (1900 < value) ) go_safe_and_reset("1.8V rail out of spec", "1.8", value);
         break;
     case 2:
         value = V3V8;
@@ -226,11 +226,11 @@ uint16_t safety_check(const uint16_t test_item)
         value = V5V5N;
         if( (-6100 /*telemetry is wrong so this value is wrong to compensate */ > value) ||
         (-5350 < value) )
-        go_safe_and_reset("negative 5.5V rail out of spec");
+        go_safe_and_reset("negative 5.5V rail out of spec", "negative 5.5", value);
         break;
     case 5:
         value = V29;
-        if( (28750 > value) || (29500 < value) ) go_safe_and_reset("29V rail out of spec");
+        if( (28750 > value) || (29500 < value) ) go_safe_and_reset("29V rail out of spec", "29", value);
         break;
     case 6:
         if( 60 < AFE_CH_A_TEMP ) go_safe_and_reset("AFE #A overheated");
