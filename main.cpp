@@ -237,33 +237,42 @@ uint16_t safety_check(const uint16_t test_item)
         if( (28000 > value) || (29500 < value) ) go_safe_and_reset("29V rail out of spec", "29", value);
         break;
     case 6:
-        if( 60 < AFE_CH_A_TEMP ) go_safe_and_reset("AFE #A overheated");
+        value = AFE_CH_A_TEMP;
+        if( 60 < value ) go_safe_and_reset("AFE #A overheated", "AFE #A", value);
         break;
     case 7:
-        if( 60 < AFE_CH_B_TEMP ) go_safe_and_reset("AFE #B overheated");
+        value = AFE_CH_B_TEMP;
+        if( 60 < value ) go_safe_and_reset("AFE #B overheated", "AFE #B", value);
         break;
     case 8:
-        if( 60 < AFE_MAIN_TEMP ) go_safe_and_reset("Main AFE overheated");
+        value = AFE_MAIN_TEMP;
+        if( 60 < value ) go_safe_and_reset("Main AFE overheated", "Main AFE", value);
         break;
 
 
     case 9:
-        if( 70 < ADC_LM20 ) go_safe_and_reset("ADC overheated");
+        value = ADC_LM20;
+        if( 70 < value ) go_safe_and_reset("ADC overheated", "ADC", value);
         break;
     case 10:
-        if( 70 < T_PRE_RX_A ) go_safe_and_reset("RX preamp #A overheated");
+        value = T_PRE_RX_A;
+        if( 70 < value ) go_safe_and_reset("RX preamp #A overheated", "RX preamp #A", value);
         break;
     case 11:
-        if( 70 < T_LDO_A ) go_safe_and_reset("LDO #A overheated");
+        value = T_LDO_A;
+        if( 70 < value ) go_safe_and_reset("LDO #A overheated", "LDO #A", value);
         break;
     case 12:
-        if( 90 < T_PA_A ) go_safe_and_reset("PA #A overheated");
+        value = T_PA_A;
+        if( 90 < value ) go_safe_and_reset("PA #A overheated", "PA #A", value);
         break;
     case 13:
-        if( 70 < T_PRE_TX2_A ) go_safe_and_reset("TX preamp 2 #A overheated");
+        value = T_PRE_TX2_A;
+        if( 70 < value ) go_safe_and_reset("TX preamp 2 #A overheated", "TX preamp 2 #A", value);
         break;
     case 14:
-        if( 70 < T_PRE_TX3_A ) go_safe_and_reset("TX preamp 3 #A overheated");
+        value = T_PRE_TX3_A;
+        if( 70 < value ) go_safe_and_reset("TX preamp 3 #A overheated", "TX preamp 3 #A", value);
         break;
     case 15:
         //if( 33 < P_IN_A ) go_safe_and_reset("PA #A return power > 2 Watts");
@@ -271,19 +280,24 @@ uint16_t safety_check(const uint16_t test_item)
 
 
     case 16:
-        if( 70 < T_PRE_RX_B ) go_safe_and_reset("RX preamp #B overheated");
+        value = T_PRE_RX_B;
+        if( 70 < value ) go_safe_and_reset("RX preamp #B overheated", "RX preamp #B", value);
         break;
     case 17:
-        if( 70 < T_LDO_B ) go_safe_and_reset("LDO #B overheated");
+        value = T_LDO_B;
+        if( 70 < value ) go_safe_and_reset("LDO #B overheated", "LDO #B", value);
         break;
     case 18:
-        if( 90 < T_PA_B ) go_safe_and_reset("PA #B overheated");
+        value = T_PA_B;
+        if( 90 < value ) go_safe_and_reset("PA #B overheated", "PA #B", value);
         break;
     case 19:
-        if( 70 < T_PRE_TX2_B ) go_safe_and_reset("TX preamp 2 #B overheated");
+        value = T_PRE_TX2_B;
+        if( 70 < value ) go_safe_and_reset("TX preamp 2 #B overheated", "TX preamp 2 #B", value);
         break;
     case 20:
-        if( 70 < T_PRE_TX3_B ) go_safe_and_reset("TX preamp 3 #B overheated");
+        value = T_PRE_TX3_B;
+        if( 70 < value ) go_safe_and_reset("TX preamp 3 #B overheated", "TX preamp 3 #B", value);
         break;
     case 21:
         //if( 33 < P_IN_B ) go_safe_and_reset("PA #B return power > 2 Watts");
