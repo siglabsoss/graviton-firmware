@@ -478,21 +478,21 @@ void changeState(uint8_t msg)
     switch( CS_OP_CODE_MASK & msg )
         {
         case CS_OP_CODE_0:
-        switch_to_safe(&afe_a);
-        switch_to_safe(&afe_b);
-        break;
+            switch_to_safe(&afe_a);
+            switch_to_safe(&afe_b);
+            break;
         case CS_OP_CODE_1:
-        dump_telemetry(&fpga);
-        break;
+            dump_telemetry(&fpga);
+            break;
         case CS_OP_CODE_2:
-        dump_telemetry(&pc);
-        break;
+            dump_telemetry(&pc);
+            break;
         case CS_OP_CODE_3:
-        if( CS_AFE_A == (CS_AFE_MASK & msg) )
-            switch_to_tx(&afe_a);
-        if( CS_AFE_B == (CS_AFE_MASK & msg) )
-            switch_to_tx(&afe_b);
-        break;
+            if( CS_AFE_A == (CS_AFE_MASK & msg) )
+                switch_to_tx(&afe_a);
+            if( CS_AFE_B == (CS_AFE_MASK & msg) )
+                switch_to_tx(&afe_b);
+            break;
         case CS_OP_CODE_4:
         case CS_OP_CODE_5:
         case CS_OP_CODE_6:
@@ -509,24 +509,25 @@ void changeState(uint8_t msg)
         case CS_OP_CODE_17:
         case CS_OP_CODE_18:
         case CS_OP_CODE_19:
-        dac3484.set_current(&pc, (CS_OP_CODE_MASK & msg) - CS_OP_CODE_4);
-        break;
+            dac3484.set_current(&pc, (CS_OP_CODE_MASK & msg) - CS_OP_CODE_4);
+            break;
         case CS_OP_CODE_20:
-        pc.printf("\033[0;0H");
-        pc.printf("P_IN_A        = %i    \r\n", P_IN_A);
-        pc.printf("P_OUT_A       = %i    \r\n", P_OUT_A);
-        break;
+            pc.printf("\033[0;0H");
+            pc.printf("P_IN_A        = %i    \r\n", P_IN_A);
+            pc.printf("P_OUT_A       = %i    \r\n", P_OUT_A);
+            break;
         case CS_OP_CODE_21:
-        dac3484.read_config(&pc);
-        break;
+            dac3484.read_config(&pc);
+            break;
         case CS_OP_CODE_22:
-        if(CS_AFE_A == (CS_AFE_MASK & msg))
-            switch_to_safe(&afe_a);
-        if(CS_AFE_B == (CS_AFE_MASK & msg))
-            switch_to_safe(&afe_b);
+            if(CS_AFE_A == (CS_AFE_MASK & msg))
+                switch_to_safe(&afe_a);
+            if(CS_AFE_B == (CS_AFE_MASK & msg))
+                switch_to_safe(&afe_b);
+            break;
         case CS_OP_CODE_63:
         default:
-        break;
+            break;
         }
 }
 
