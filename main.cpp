@@ -12,7 +12,7 @@
 // #include "stdio.h"
 
 void set_led(const unsigned idx, const bool val);
-void go_safe_and_reset(const char* reason);
+void go_safe_and_reset(const char* reason, const char* reason2 = 0, const int32_t reason3 = 0);
 
 
 // order is  tx,   rx
@@ -76,7 +76,7 @@ void dump_telemetry(RawSerial *out)
 }
 
 
-void go_safe_and_reset(const char* reason)
+void go_safe_and_reset(const char* reason, const char* reason2, const int32_t reason3)
 {
     switch_to_safe(&afe_a);
     switch_to_safe(&afe_b);
@@ -96,7 +96,13 @@ void go_safe_and_reset(const char* reason)
     // shutdown everything else
     configure_grav_safe(&afe_0);
 
-    pc.printf("ERROR: POWERED DOWN. %s\r\n", reason);
+    if( reason2 == 0 ) {
+        pc.printf("ERROR: POWERED DOWN. %s\r\n", reason);
+    } else {
+        pc.puts(reason2);
+        pc.printf(" value: %d\r\n", reason3);
+        pc.printf("ERROR: POWERED DOWN. %s\r\n", reason);
+    }
 
     dump_telemetry(&pc);
 
@@ -127,9 +133,12 @@ typedef struct {
 // iterations, it triggers a fault
 // if it is below the hard bottom for above the hard top we trigger fault immedaitly
 soft_bottom_tolerance_t v3v8v_soft =
-{  3400,   3500,   4000,      25,       0,  "3.8", "3.8V rail out of spec"};
+{  3400,   3500,   4000,      100,       0,  "3.8", "3.8V rail out of spec"};
 
 
+// char gsartol_buffer[64];
+
+// void gsartol_print()
 
 // returns true if error / we did reset
 bool go_safe_and_reset_tolerance(soft_bottom_tolerance_t* tolerance, const int32_t value, const char* reason) {
@@ -143,18 +152,14 @@ bool go_safe_and_reset_tolerance(soft_bottom_tolerance_t* tolerance, const int32
      //    }
 
     if( (tolerance->lower_hard > value) || (tolerance->upper_hard < value) ) {
-        pc.puts(tolerance->name);
-        pc.printf(" value: %d\r\n", value);
-        go_safe_and_reset(tolerance->msg);
+        go_safe_and_reset(tolerance->msg, tolerance->name, value);
         return true;
     }
 
 
     if( (tolerance->lower_tol > value) ) {
         if( tolerance->violations >= tolerance->repeat_tol ) {
-            pc.puts(tolerance->name);
-            pc.printf(" value: %d\r\n", value);
-            go_safe_and_reset(tolerance->msg);
+            go_safe_and_reset(tolerance->msg, tolerance->name, value);
             return true;
         }
         
