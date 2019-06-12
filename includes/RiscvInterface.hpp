@@ -30,6 +30,10 @@ public:
         fpga->printf("hello\r\n");
     }
 
+    void echoChar(const uint8_t c) {
+        fpga->printf("c: %d\r\n", (int)c);
+    }
+
 };
 
 

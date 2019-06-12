@@ -9,6 +9,8 @@
 #include "ads42lb69.h"
 #include "dac3484.h"
 #include "RiscvInterface.hpp"
+#include "FirmwareUtils.hpp"
+
 
 void set_led(const unsigned idx, const bool val);
 void go_safe_and_reset(const char* reason, const char* reason2 = 0, const int32_t reason3 = 0);
@@ -173,14 +175,26 @@ bool go_safe_and_reset_tolerance(soft_bottom_tolerance_t* tolerance, const int32
     return false;
 }
 
-/*
- * Run a specific safety check and return the next safety check in the list.
- */
+uint16_t disable_saftey_vector[32] = {};
+
+
+///
+/// Run a specific safety check and return the next safety check in the list.
+/// Do not re-number these tests without first considering the broken_boards() function
+/// maybe these checks could be moved to #defines
+
 uint16_t safety_check(const uint16_t test_item)
 {
     int32_t value;
 
-    switch( test_item )
+    ///
+    /// This is an array of values which will disable checks if the array entry is set
+    /// When the array entry is set to 0, the test is enabled
+    /// see init_broken_boards()
+    /// 
+    const uint16_t test_or_disabled = test_item | disable_saftey_vector[test_item];
+
+    switch( test_or_disabled )
     {
     case 0:
         value = V2V5;
@@ -204,7 +218,7 @@ uint16_t safety_check(const uint16_t test_item)
         break;
     case 4:
         value = V5V5N;
-        if( (-6100 /*telemetry is wrong so this value is wrong to compensagte*/ > value) ||
+        if( (-6100 /*telemetry is wrong so this value is wrong to compensate */ > value) ||
         (-5350 < value) )
         go_safe_and_reset("negative 5.5V rail out of spec");
         break;
@@ -264,6 +278,9 @@ uint16_t safety_check(const uint16_t test_item)
     case 21:
         //if( 33 < P_IN_B ) go_safe_and_reset("PA #B return power > 2 Watts");
         break;
+    ///
+    /// Make sure to increase disable_saftey_vector if we add more than 32 cases here
+    ///
     default:
         return 0;
     }
@@ -282,9 +299,59 @@ uint16_t safety_check(const uint16_t test_item)
 // }
 
 ///
-/// LED stuff
+/// Broken Boards
 /// 
-void set_led(const unsigned idx, const bool val) {
+
+void zero_broken_boards() {
+    const unsigned len = ARRAY_SIZE(disable_saftey_vector);
+
+    for(unsigned i = 0; i < len; i++) {
+        disable_saftey_vector[i] = 0;
+    }
+}
+
+void disable_saftey_check(const uint16_t test_item) {
+    const unsigned len = ARRAY_SIZE(disable_saftey_vector);
+
+    if( test_item >= len ) {
+        return;
+    }
+
+    disable_saftey_vector[test_item] = 0x8000;
+}
+
+void enable_saftey_check(const uint16_t test_item) {
+    const unsigned len = ARRAY_SIZE(disable_saftey_vector);
+
+    if( test_item >= len ) {
+        return;
+    }
+
+    disable_saftey_vector[test_item] = 0;
+}
+
+void init_broken_boards() {
+
+    // reset array, enabling all checks
+    zero_broken_boards();
+
+    const uint32_t a = DEV_ID0;
+    const uint32_t b = DEV_ID1;
+    const uint32_t c = DEV_ID2;
+
+    // Board 008
+    // 8000e 524b4303 20323035
+
+    
+    // Board 012
+    // 150016 524b4303 20323035
+    if( a == 0x150016 && b == 0x524b4303 && c == 0x20323035 ) {
+        // Board 012 has a broken PA #A temp sensor
+        // note that 12 here is the check number and not the board number
+        disable_saftey_check(12);
+
+        pc.printf("Board 12 has broken PA #A sensor!!\r\n");
+    }
 
 }
 
@@ -544,6 +611,8 @@ int main()
     // initialize entire board
     init();
 
+    init_broken_boards();
+
     int slow = 1;
 
     int mode_switched = 0;
@@ -551,15 +620,17 @@ int main()
     int dac_current = 0;
     (void) dac_current;
 
+    pc.printf("Board ID Booted:   %x    %x    %x\r\n", DEV_ID0, DEV_ID1, DEV_ID2);
+
     while(1)
     {
         if(slow % 10000 == 0 ) {
             //          pc.printf("x\n");
             //slow = 0;
             if(!mode_switched) {
-                pc.printf("switched to tx a\n");
+                // pc.printf("switched to tx a\n");
                 mode_switched = 1;
-                changeState(CS_OP_CODE_3 | CS_AFE_A);
+                // changeState(CS_OP_CODE_3 | CS_AFE_A);
                 //              changeState(CS_OP_CODE_19 | 0x400);
                 //changeState(CS_OP_CODE_7); // dac current
                 changeState(CS_OP_CODE_21);
@@ -573,14 +644,17 @@ int main()
         slow++;
 
         if(fpga.readable()) {
-        uint8_t val = fpga.getc();
-        pc.printf("received char: %d\r\n", (int) val);
-        changeState(val);
-        // either one of the channels is set to transmit then enable DAC output
-        if( (AMC7891_MODE_TX == afe_a.mode) | (AMC7891_MODE_TX == afe_b.mode) )
-            configure_grav_on_with_tx_on(&afe_0);
-        else
-            configure_grav_on_with_tx_off(&afe_0);
+            uint8_t val = fpga.getc();
+            changeState(val);
+            pc.printf("received char: %d\r\n", (int) val);
+            riscv.echoChar(val);
+
+
+            // either one of the channels is set to transmit then enable DAC output
+            if( (AMC7891_MODE_TX == afe_a.mode) | (AMC7891_MODE_TX == afe_b.mode) )
+                configure_grav_on_with_tx_on(&afe_0);
+            else
+                configure_grav_on_with_tx_off(&afe_0);
         }
         //pc.printf("BEFORE safety check\r\n");
         check = safety_check(check);
