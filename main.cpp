@@ -579,10 +579,12 @@ void init()
  */
 void changeState(uint8_t msg)
 {
-    if( (CS_RX == (CS_RX_FLAG_MASK & msg)) && (CS_AFE_A == (CS_AFE_MASK & msg)) )
-    switch_to_rx(&afe_a, CS_OP_CODE_MASK & msg);
-    if( (CS_RX == (CS_RX_FLAG_MASK & msg)) && (CS_AFE_B == (CS_AFE_MASK & msg)) )
-    switch_to_rx(&afe_b, CS_OP_CODE_MASK & msg);
+    if( (CS_RX == (CS_RX_FLAG_MASK & msg)) && (CS_AFE_A == (CS_AFE_MASK & msg)) ) {
+        switch_to_rx(&afe_a, CS_OP_CODE_MASK & msg);
+    }
+    if( (CS_RX == (CS_RX_FLAG_MASK & msg)) && (CS_AFE_B == (CS_AFE_MASK & msg)) ) {
+        switch_to_rx(&afe_b, CS_OP_CODE_MASK & msg);
+    }
     if( CS_RX != (CS_RX_FLAG_MASK & msg) )
     switch( CS_OP_CODE_MASK & msg )
         {
