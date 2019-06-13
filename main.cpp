@@ -381,8 +381,18 @@ void init_broken_boards() {
     // 800f0011    524b4303    20323035
     if( a == 0x800f0011 && b == 0x524b4303 && c == 0x20323035 ) {
         disable_saftey_check(11);
+        disable_saftey_check(10);
 
         pc.printf("Board 021 has broken LDO #A sensor!!\r\n");
+        pc.printf("Board 021 has HOT RX preamp #A!!\r\n");
+    }
+
+    // Board 007
+    if( a == 0x140013 && b == 0x524b4303 && c == 0x20323035 ) {
+        disable_saftey_check(16);
+        // disable_saftey_check(10);
+        pc.printf("Board 007 has broken RX preamp #B sensor!!\r\n");
+        // pc.printf("Board 007 has zero value preamp #A!!\r\n");
     }
 
 }
